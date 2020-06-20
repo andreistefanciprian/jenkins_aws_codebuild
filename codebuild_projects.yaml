@@ -1,6 +1,6 @@
 # AWS CodeBuld steps for our projects
 codebuild_projects:
-- codebuildtest-MessageUtil
+- codebuildtest-MessageUtil22
 - newproj-test
 codebuild_steps2:
     - codebuildtest-MessageUtil
