@@ -45,66 +45,90 @@ def execute_codebuild_from_yaml(yaml_file):
 def get_codebuild_projects_from_aws(client):
     """
     Get list of CodeBuild projects from AWS.
-    return: list of projects
+    Returns a list of projects.
     """
-
-    codebuild_projects = client.list_projects()
-    return codebuild_projects['projects']
+    
+    try:
+        codebuild_projects = client.list_projects()
+    except Exception as e:
+        print(str(e))
+        raise e
+    else:
+        return codebuild_projects['projects']
 
 def start_build(client, codebuild_project):
     """
     Start CodeBuild project build.
     """
-
-    client.start_build(projectName=codebuild_project)
-    
-    last_build_results = get_last_build_results(client, codebuild_project)
-    print(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...")
+    try:
+        client.start_build(projectName=codebuild_project)
+    except Exception as e:
+        print(str(e))
+        raise e
+    else:
+        last_build_results = get_last_build_results(client, codebuild_project)
+        print(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...")
 
 def verify_build_status(client, codebuild_project):
     """
     This function verifies the status of the last CodeBuild build until it is successfull.
     """
 
-    time_interval = 2
-    # max_time = to be implemented
+    time_interval = 5   # verify status every n seconds
+    time_left = 300     # max time a build can take in seconds
 
-    while True:
-        last_build_results = get_last_build_results(client, codebuild_project)
-        status_msg = f"CodeBuild Project {last_build_results['Build Project Name']}, Build Number {last_build_results['Build Number']}, Status {last_build_results['Build Status']}"
+    while time_left > 0:
+        
+        time_left -= time_interval
 
-        if last_build_results['Build Status'] == 'SUCCEEDED':
-            print(status_msg)
-            break
+        try:
+            last_build_results = get_last_build_results(client, codebuild_project)
+        except Exception as e:
+            print(str(e))
+            raise e
         else:
-            print(status_msg)
-            time.sleep(time_interval)
-            continue
+            codebuild_project = last_build_results['Build Project Name']
+            codebuild_build_number = last_build_results['Build Number']
+            codebuild_status = last_build_results['Build Status']
+            status_msg = f"CodeBuild Project {codebuild_project} build {codebuild_build_number}: {codebuild_status}"
+            
+            if last_build_results['Build Status'] == 'SUCCEEDED':
+                print(status_msg)
+                break
+            else:
+                print(status_msg)
+                time.sleep(time_interval)
+                continue
 
 
 def get_last_build_results(client, codebuild_project):
     """
     Get CodeBuild result of last build.
+
+    Return dictionary.
     """
-    build_result = {}
 
-    project_builds = client.list_builds_for_project(projectName=codebuild_project)
-    build_id = project_builds['ids'][0]
-    build_data = client.batch_get_builds(ids = [build_id])
-    
-    build_result['Build Number'] = build_data['builds'][0]['buildNumber']
-    build_result['Build Start Time'] = build_data['builds'][0]['startTime']
-    build_result['Build Status'] = build_data['builds'][0]['buildStatus']
-    build_result['Build Project Name'] = build_data['builds'][0]['projectName']
+    result = {}
 
-    return build_result
-
-
+    try:
+        project_builds = client.list_builds_for_project(projectName=codebuild_project)
+    except Exception as e:
+        print(str(e))
+        raise e
+    else: 
+        build_id = project_builds['ids'][0]
+        build_data = client.batch_get_builds(ids = [build_id])
+        result['Build Number'] = build_data['builds'][0]['buildNumber']
+        result['Build Start Time'] = build_data['builds'][0]['startTime']
+        result['Build Status'] = build_data['builds'][0]['buildStatus']
+        result['Build Project Name'] = build_data['builds'][0]['projectName']
+        return result
 
 def dict2json(data: dict):
     """
     Parse CodeBuild build result from dict to nice JSON output.
     """
+    
     build_data_json = json.dumps(data, indent=4, sort_keys=True, default=str)
     parsed = json.loads(str(build_data_json))
     return json.dumps(parsed, indent=4, sort_keys=True)
