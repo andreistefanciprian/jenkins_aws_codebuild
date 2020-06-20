@@ -36,7 +36,7 @@ if __name__ == "__main__":
     
     # variables
     txt_file = os.path.join(os.getcwd(), 'codebuild_projects.txt')
-    yaml_file = os.path.join(os.getcwd(), 'file.yaml')
+    yaml_file = os.path.join(os.getcwd(), 'codebuild_projects.yaml')
 
     #  execute function
     parse = parse_yaml(yaml_file, txt_file)

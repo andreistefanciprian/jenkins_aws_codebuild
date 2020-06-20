@@ -10,13 +10,17 @@ Spin off a jenkins docker container with a named volume to preserve jenkins conf
 
 ```docker run -p 8090:8080 -d -v jenkins_aws:/var/jenkins_home --name jenkins_aws jenkins/jenkins:2.235.1-lts-centos7```
 
-Have AWS account.
+Have AWS account with CodeBuild jobs configured. The names of the CodeBuild projects should be made available in the yaml file.
 Have aws cli installed on jenkins machine (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html).
-Have python3 and pyyaml  package installed:
+Have python3 and pip packages installed in Jenkins:
 ```
 yum install -y python3
-pip3 install pyyaml
+pip3 install -r requirements.txt
 ```
+
+AWS keys defined in Jenkins as secret text.
+Git token defined both as secret text and username and password type of secrets.
+Aws region defined as secret.
 
 ## AWS CLI CodeBuild commands
 
@@ -54,6 +58,6 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # execute script
-python3 
+python3 ...
 
 ```

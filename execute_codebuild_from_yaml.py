@@ -4,7 +4,7 @@ import boto3
 import json
 import time
 
-def execute_codebuild_from_yaml(yaml_file):
+def main(yaml_file):
     """
     Execute AWS codebuild projects provided in yaml file.
     """
@@ -128,7 +128,7 @@ def dict2json(data: dict):
     """
     Parse CodeBuild build result from dict to nice JSON output.
     """
-    
+
     build_data_json = json.dumps(data, indent=4, sort_keys=True, default=str)
     parsed = json.loads(str(build_data_json))
     return json.dumps(parsed, indent=4, sort_keys=True)
@@ -136,8 +136,8 @@ def dict2json(data: dict):
 
 if __name__ == "__main__":
     
-    # variables
-    yaml_file = os.path.join(os.getcwd(), 'file.yaml')
+    # yaml file path
+    yaml_file = os.path.join(os.getcwd(), 'codebuild_projects.yaml')
 
-    # execute codebuild projects
-    execute_codebuild_from_yaml(yaml_file)
+    # execute codebuild projects in yaml file
+    main(yaml_file)
