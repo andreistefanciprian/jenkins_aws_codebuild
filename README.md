@@ -12,7 +12,11 @@ Spin off a jenkins docker container with a named volume to preserve jenkins conf
 
 Have AWS account.
 Have aws cli installed on jenkins machine (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html).
-Have Pipeline Utility Steps plugin installed to use 
+Have python3 and pyyaml  package installed:
+```
+yum install -y python3
+pip3 install pyyaml
+```
 
 ## AWS CLI CodeBuild commands
 
