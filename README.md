@@ -22,6 +22,7 @@ aws codebuild list-builds
 
 # start CodeBuild project
 aws codebuild start-build --project-name codebuildtest-MessageUtil
+aws codebuild start-build --project-name newproj-test
 
 # list CodeBuild jobs for specific project
 aws codebuild list-builds-for-project --project-name codebuildtest-MessageUtil
