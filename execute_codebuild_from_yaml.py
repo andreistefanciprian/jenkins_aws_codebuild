@@ -20,36 +20,19 @@ def execute_codebuild_from_yaml(yaml_file):
             else:
                 print("Connecting to AWS to execute the CodeBuild projects...")
                 client = boto3.client('codebuild')
-                codebuild_projects = client.list_projects()
-                codebuild_projects = codebuild_projects['projects']
+             
+                # get list of CodeBuild projects from AWS
+                codebuild_projects = get_codebuild_projects_from_aws(client)
 
                 for codebuild_project in read_yaml['codebuild_projects']:
                     if codebuild_project in codebuild_projects:
                         print(f"CodeBuild Project {codebuild_project} is available in AWS CodeBuild Project list.")
                         
                         # start CodeBuild project build
-                        client.start_build(projectName=codebuild_project)
+                        start_build(client, codebuild_project)
 
-                        last_build_results = get_last_build_results(client, codebuild_project)
-                        print(f"Starting AWS CodeBuild Project {codebuild_project} build {last_build_results['Build Number']} ...")
-
-                        # verify build status
+                        # verify CodeBuild build status
                         verify_build_status(client, codebuild_project)
-                        # while True:
-                        #     last_build_results = get_last_build_results(client, codebuild_project)
-                        #     status_msg = f"CodeBuild Project: {last_build_results['Build Project Name']} -- Build Number: {last_build_results['Build Number']} -- Status: {last_build_results['Build Status']}"
-
-                        #     if last_build_results['Build Status'] == 'SUCCEEDED':
-                        #         print(status_msg)
-                        #         break
-                        #     else:
-                        #         print(status_msg)
-                        #         time.sleep(10)
-                        #         continue
-                        
-                        # display build run result in json format
-                        # build_result = dict2json(build_data)
-                        # print(build_result)
 
 
                     else:
@@ -58,6 +41,25 @@ def execute_codebuild_from_yaml(yaml_file):
     else:
         result = f"{yaml_file} file does not exist!"
         print(result)
+
+def get_codebuild_projects_from_aws(client):
+    """
+    Get list of CodeBuild projects from AWS.
+    return: list of projects
+    """
+
+    codebuild_projects = client.list_projects()
+    return codebuild_projects['projects']
+
+def start_build(client, codebuild_project):
+    """
+    Start CodeBuild project build.
+    """
+
+    client.start_build(projectName=codebuild_project)
+    
+    last_build_results = get_last_build_results(client, codebuild_project)
+    print(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...")
 
 def verify_build_status(client, codebuild_project):
     """
@@ -69,7 +71,7 @@ def verify_build_status(client, codebuild_project):
 
     while True:
         last_build_results = get_last_build_results(client, codebuild_project)
-        status_msg = f"CodeBuild Project: {last_build_results['Build Project Name']} -- Build Number: {last_build_results['Build Number']} -- Status: {last_build_results['Build Status']}"
+        status_msg = f"CodeBuild Project {last_build_results['Build Project Name']}, Build Number {last_build_results['Build Number']}, Status {last_build_results['Build Status']}"
 
         if last_build_results['Build Status'] == 'SUCCEEDED':
             print(status_msg)
