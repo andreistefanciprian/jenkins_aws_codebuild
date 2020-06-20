@@ -26,9 +26,9 @@ pipeline {
 
             // echo 'Execute codebuild projects...'
             // sh 'bash execute_codebuild_projects.sh'
-            
+
             echo 'Parse yaml and execute CodeBuild Projects...'
-            sh 'python3 execute_codebuild_from_yaml.py'
+            sh 'python3 -u execute_codebuild_from_yaml.py'
          }
       }
 
