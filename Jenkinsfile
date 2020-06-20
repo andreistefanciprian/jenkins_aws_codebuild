@@ -21,11 +21,14 @@ pipeline {
       stage('Execute CodeBuild projects in AWS') {
          steps {
 
-            echo 'Parse yaml file with python3 script and output codebuild projects in txt file...'
-            sh 'python3 parse_yaml.py'
+            // echo 'Parse yaml file with python3 script and output codebuild projects in txt file...'
+            // sh 'python3 parse_yaml.py'
 
-            echo 'Execute codebuild projects...'
-            sh 'bash execute_codebuild_projects.sh'
+            // echo 'Execute codebuild projects...'
+            // sh 'bash execute_codebuild_projects.sh'
+            
+            echo 'Parse yaml and execute CodeBuild Projects...'
+            sh 'python3 execute_codebuild_from_yaml.py'
          }
       }
 
