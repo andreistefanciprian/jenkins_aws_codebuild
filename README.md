@@ -84,8 +84,9 @@ python3 ...
 AWS creds to be stored in .env file prior to run these commands.
 
 ```
-docker-compose run terraform init
-docker-compose run terraform plan -out terraform.tfplan
-docker-compose run terraform apply "terraform.tfplan"
-docker-compose run terraform destroy --auto-approve
+TF_VAR_TARGET=static
+docker-compose run terraform init $TF_VAR_TARGET
+docker-compose run terraform plan -out terraform.tfplan $TF_VAR_TARGET
+docker-compose run terraform apply terraform.tfplan
+docker-compose run terraform destroy -auto-approve $TF_VAR_TARGET
 ```
