@@ -10,12 +10,13 @@ phases:
     commands:
       - cd terraform_code
       - ls -larth
-      - terraform version
+      - docker-compose run terraform version
 
   build:
     commands:
-      - echo This is build phase
+      - ls -larth
+      - docker-compose run terraform init
 
   post_build:
     commands:
-      - echo terraform completed on `date`sss
+      - echo terraform completed on `date`
