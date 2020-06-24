@@ -1,0 +1,10 @@
+version: "3.8"
+services:
+  terraform: 
+    image: hashicorp/terraform:0.12.26
+    # env_file: .env
+    entrypoint: terraform
+    # entrypoint: [ "/bin/sh", "-c", "sleep 3600"]
+    working_dir: /var/tmp/code
+    volumes:
+    - ./terraform_code:/var/tmp/code
