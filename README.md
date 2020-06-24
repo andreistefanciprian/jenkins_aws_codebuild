@@ -46,7 +46,7 @@ build_id=$(aws codebuild list-builds-for-project --project-name codebuildtest-Me
 aws codebuild batch-get-builds --ids $build_id --query 'builds[0].buildStatus' --output text
 ```
 
-
+## Python env
 ```
 # create python3 virtual env
 python3 -m venv .venv
@@ -60,4 +60,12 @@ pip install -r requirements.txt
 # execute script
 python3 ...
 
+```
+
+## manually verify terraform can be run
+```
+docker-compose run terraform init
+docker-compose run terraform plan -out terraform.tfplan
+docker-compose run terraform apply "terraform.tfplan"
+docker-compose run terraform destroy --auto-approve
 ```

@@ -16,3 +16,8 @@
 
 # .pem files
 *.pem
+
+# .env file
+.env
+
+codebuild_projects.txt
