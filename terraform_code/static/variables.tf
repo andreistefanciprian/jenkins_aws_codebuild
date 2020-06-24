@@ -16,11 +16,11 @@ variable "cidr_block" {
 }
 
 variable "private_subnets" {
-  type = list
+  type    = list
   default = ["10.0.1.0/24", "10.0.3.0/24"]
 }
 
 variable "public_subnets" {
-  type = list
+  type    = list
   default = ["10.0.31.0/24", "10.0.33.0/24"]
 }

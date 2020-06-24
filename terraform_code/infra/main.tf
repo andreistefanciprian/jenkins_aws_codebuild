@@ -2,15 +2,15 @@
 
 # aws cloud provider
 provider "aws" {
-  region     = var.region
+  region = var.region
 }
 
 # terraform backend
 terraform {
   backend "s3" {
-    bucket = "s3-tfstate-95653"
-    key    = "infra/infra.tfstate"
-    region = "us-east-1"
+    bucket         = "s3-tfstate-95653"
+    key            = "infra/infra.tfstate"
+    region         = "us-east-1"
     dynamodb_table = "dynamodb-tfstate-lock-95653"
   }
 }
@@ -20,9 +20,9 @@ data "terraform_remote_state" "static" {
   backend = "s3"
 
   config = {
-    key     = "static/static.tfstate"
-    bucket  = var.static_remote_state_bucket
-    region  = var.region
+    key    = "static/static.tfstate"
+    bucket = var.static_remote_state_bucket
+    region = var.region
   }
 }
 
