@@ -8,16 +8,16 @@ phases:
 
   pre_build:
     commands:
-      # - cd terraform_code
+      # copy env var file
       - aws s3 cp s3://codebuild-bucket-1982/.env .env
-      - ls -larth
       - docker-compose run terraform version
 
   build:
     commands:
-      - ls -larth
       - docker-compose run terraform init
-
+      - docker-compose run terraform plan -out terraform.tfplan
+      - docker-compose run terraform apply "terraform.tfplan"
+      
   post_build:
     commands:
       - echo terraform completed on `date`
