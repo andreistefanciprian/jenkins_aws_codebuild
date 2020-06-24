@@ -6,7 +6,6 @@ Jenkins pipeline that triggers CodeBuild jobs in AWS.
 
 Have Docker installed. We'll be running Jenkins on a Docker container.
 Spin off a jenkins docker container with a named volume to preserve jenkins configuration and pipeline for future use:
-```docker run -p 8080:8080 -d -v jenkins_home_centos:/var/jenkins_home --name jenkins jenkins/jenkins:lts-centos```
 
 ```docker run -p 8090:8080 -d -v jenkins_aws:/var/jenkins_home --name jenkins_aws jenkins/jenkins:2.235.1-lts-centos7```
 
@@ -22,7 +21,26 @@ AWS keys defined in Jenkins as secret text.
 Git token defined both as secret text and username and password type of secrets.
 Aws region defined as secret.
 
-## AWS CLI CodeBuild commands
+## AWS resources prerequsites
+
+Have aws s3 bucket for terraform backend and dynamodb table for terraform state lock management:
+```
+cd prerequisites
+terraform init --var-file="../../terraform.tfvars"
+terraform plan --var-file="../../terraform.tfvars" -out terraform.tfplan
+terraform apply "terraform.tfplan"
+
+# destroy resources at the end of this tutorial
+terraform destroy --var-file="../../terraform.tfvars"
+```
+
+For the step above, AWS access key and access secret key should be stored in a terraform.tfvars.
+There is a sample with the contents of this file in the main directory of the repository.
+
+Once s3 bucket and dynamodb table are built, the names of these resources will be shown in the terraform output.
+Take these names and populate the related fields in the backend section of the terraform code inside the main.tf files in both static and infra directories.
+
+## DEBUG: Use these AWS CLI commands to manually interact with CodeBuild
 
 ```
 # list CodeBuild projects and builds
@@ -46,7 +64,7 @@ build_id=$(aws codebuild list-builds-for-project --project-name codebuildtest-Me
 aws codebuild batch-get-builds --ids $build_id --query 'builds[0].buildStatus' --output text
 ```
 
-## Python env
+## DEBUG: Use these commands to manually check python script
 ```
 # create python3 virtual env
 python3 -m venv .venv
@@ -59,10 +77,12 @@ pip install -r requirements.txt
 
 # execute script
 python3 ...
-
 ```
 
-## manually verify terraform can be run
+## DEBUG: Use these commands to verify you can build resources with terraform from CLI
+
+AWS creds to be stored in .env file prior to run these commands.
+
 ```
 docker-compose run terraform init
 docker-compose run terraform plan -out terraform.tfplan

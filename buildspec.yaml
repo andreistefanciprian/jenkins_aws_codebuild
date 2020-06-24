@@ -8,9 +8,7 @@ phases:
 
   pre_build:
     commands:
-      # copy env var file
       - aws s3 cp s3://codebuild-bucket-1982/.env .env
-      - docker-compose run terraform version
 
   build:
     commands:
