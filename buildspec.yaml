@@ -9,6 +9,7 @@ phases:
   pre_build:
     commands:
       # - cd terraform_code
+      - aws s3 cp s3://codebuild-bucket-1982/.env .env
       - ls -larth
       - docker-compose run terraform version
 
