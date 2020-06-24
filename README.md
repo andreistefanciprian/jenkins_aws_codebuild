@@ -89,4 +89,8 @@ docker-compose run terraform init $TF_VAR_TARGET
 docker-compose run terraform plan -out terraform.tfplan $TF_VAR_TARGET
 docker-compose run terraform apply terraform.tfplan
 docker-compose run terraform destroy -auto-approve $TF_VAR_TARGET
+
+# using make commands
+make deploy TF_TARGET=$TF_VAR_TARGET
+make destroy TF_EXTRA_OPS=-auto-approve TF_TARGET=$TF_VAR_TARGET
 ```

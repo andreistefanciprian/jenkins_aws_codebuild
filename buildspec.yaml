@@ -13,9 +13,6 @@ phases:
 
   build:
     commands:
-      # - docker-compose run terraform init $TF_VAR_TARGET
-      # - docker-compose run terraform plan -out terraform.tfplan $TF_VAR_TARGET
-      # - docker-compose run terraform apply terraform.tfplan
       - |
         if [[ $TF_ACTION == 'destroy' ]]; then
           make destroy TF_EXTRA_OPS=-auto-approve TF_TARGET=$TF_VAR_TARGET
