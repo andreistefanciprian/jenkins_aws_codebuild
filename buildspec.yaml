@@ -1,0 +1,21 @@
+version: 0.2
+
+phases:
+
+  install:
+    runtime-versions:
+      python: 3.7
+
+  pre_build:
+    commands:
+      - cd terraform_code
+      - ls -larth
+      - terraform version
+
+  build:
+    commands:
+      - echo This is build phase
+
+  post_build:
+    commands:
+      - echo terraform completed on `date`sss
