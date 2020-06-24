@@ -8,7 +8,7 @@ phases:
 
   pre_build:
     commands:
-      - cd terraform_code
+      # - cd terraform_code
       - ls -larth
       - docker-compose run terraform version
 
