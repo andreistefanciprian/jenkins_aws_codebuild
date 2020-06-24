@@ -1,7 +1,9 @@
 # AWS CodeBuld steps for our projects
 codebuild_projects:
-- codebuildtest-MessageUtil22
-- newproj-test
+- tf-static-deploy
+- tf-infra-deploy
+- tf-infra-destroy
+- tf-static-destroy
 codebuild_steps2:
     - codebuildtest-MessageUtil
     - newproj-test
