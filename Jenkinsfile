@@ -22,7 +22,8 @@ pipeline {
          steps {
                echo 'Building AWS CodeBuild Projects...'
                dir('terraform_code/'){
-                  sh "terraform init -input=false codebuild"
+                  // sh "terraform init -input=false codebuild"
+                  sh "make plan TF_TARGET=codebuild TF_EXEC=terraform"
                }                
          }
       }
