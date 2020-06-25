@@ -29,8 +29,8 @@ resource "aws_iam_role_policy" "codebuild_static_policy" {
 
 
 resource "aws_codebuild_project" "example" {
-  name          = "test-project"
-  description   = "test_codebuild_project"
+  name          = var.name
+  description   = var.description
   build_timeout = "5"
   service_role  = aws_iam_role.codebuild_static.arn
 
@@ -46,13 +46,13 @@ resource "aws_codebuild_project" "example" {
 
     environment_variable {
       name  = "TF_ACTION"
-      value = "deploy"
+      value = var.tf_action
       type  = "PLAINTEXT"
     }
 
     environment_variable {
       name  = "TF_VAR_TARGET"
-      value = "static"
+      value = var.tf_target
       type  = "PLAINTEXT"
     }
 
@@ -62,7 +62,7 @@ resource "aws_codebuild_project" "example" {
 
   source {
     type            = "GITHUB"
-    location        = "https://github.com/andreistefanciprian/jenkins_aws_codebuild.git"
+    location        = var.git_repo_link
     git_clone_depth = 1
 
     git_submodules_config {
@@ -70,7 +70,7 @@ resource "aws_codebuild_project" "example" {
     }
   }
 
-  source_version = "master"
+  source_version = var.git_repo_branch
 
   tags = {
     Environment = "Test"
