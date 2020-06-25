@@ -18,15 +18,17 @@ pipeline {
          }
       }
 
+      stage('Build CodeBuild projects with Terraform') {
+         steps {
+               echo 'Building AWS CodeBuild Projects...'
+               dir('terraform_code/'){
+                  sh "terraform init -input=false codebuild"
+               }                
+         }
+      }
+
       stage('Execute CodeBuild projects in AWS') {
          steps {
-
-            // echo 'Parse yaml file with python3 script and output codebuild projects in txt file...'
-            // sh 'python3 parse_yaml.py'
-
-            // echo 'Execute codebuild projects...'
-            // sh 'bash execute_codebuild_projects.sh'
-
             echo 'Parse yaml and execute CodeBuild Projects...'
             sh 'python3 -u execute_codebuild_from_yaml.py'
          }

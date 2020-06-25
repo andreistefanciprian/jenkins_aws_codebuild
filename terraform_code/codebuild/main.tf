@@ -7,72 +7,77 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket         = "s3-tfstate-95653"
-    key            = "static/static.tfstate"
+    key            = "codebuild/codebuild.tfstate"
     region         = "us-east-1"
     dynamodb_table = "dynamodb-tfstate-lock-95653"
   }
 }
 
 
-resource "aws_iam_role" "codebuild_static" {
-  name = "codebuild_static"
+module "codebuild_deploy_static" {
+  source = "../modules/codebuild_project"
+  codebuild_project_name = "deploy_static"
+  codebuild_project_description = "Deploy static layer resources"
+  tf_action = "deploy"
+  tf_target = "static"
+  git_repo_link = "https://github.com/andreistefanciprian/jenkins_aws_codebuild.git"
+  git_repo_branch = "master"
+  iam_role_name = "iam_role_deploy_static"
+  iam_role_policy_name = "iam_role_policy_deploy_static"
 
-  assume_role_policy = file("codebuild/policies/user_role.json")
+  codebuild_tags = {
+    Env   = "test"
+    Layer = "static"
+  }
 }
 
-resource "aws_iam_role_policy" "codebuild_static_policy" {
-  name = "codebuild_static_policy"
-  role = aws_iam_role.codebuild_static.id
+module "codebuild_deploy_infra" {
+  source = "../modules/codebuild_project"
+  codebuild_project_name = "deploy_infra"
+  codebuild_project_description = "Deploy infra layer resources"
+  tf_action = "deploy"
+  tf_target = "infra"
+  git_repo_link = "https://github.com/andreistefanciprian/jenkins_aws_codebuild.git"
+  git_repo_branch = "master"
+  iam_role_name = "iam_role_deploy_infra"
+  iam_role_policy_name = "iam_role_policy_deploy_infra"
 
-  policy = file("codebuild/policies/user_role_policy.json")
+  codebuild_tags = {
+    Env   = "test"
+    Layer = "infra"
+  }
 }
 
+module "codebuild_destroy_static" {
+  source = "../modules/codebuild_project"
+  codebuild_project_name = "destroy_static"
+  codebuild_project_description = "Destroy static layer resources"
+  tf_action = "destroy"
+  tf_target = "static"
+  git_repo_link = "https://github.com/andreistefanciprian/jenkins_aws_codebuild.git"
+  git_repo_branch = "master"
+  iam_role_name = "iam_role_destroy_static"
+  iam_role_policy_name = "iam_role_policy_destroy_static"
 
-resource "aws_codebuild_project" "example" {
-  name          = var.name
-  description   = var.description
-  build_timeout = "5"
-  service_role  = aws_iam_role.codebuild_static.arn
-
-  artifacts {
-    type = "NO_ARTIFACTS"
+  codebuild_tags = {
+    Env   = "test"
+    Layer = "static"
   }
+}
 
-  environment {
-    compute_type                = "BUILD_GENERAL1_SMALL"
-    image                       = "aws/codebuild/amazonlinux2-x86_64-standard:3.0"
-    type                        = "LINUX_CONTAINER"
-    image_pull_credentials_type = "CODEBUILD"
+module "codebuild_destroy_infra" {
+  source = "../modules/codebuild_project"
+  codebuild_project_name = "destroy_infra"
+  codebuild_project_description = "Destroy infra layer resources"
+  tf_action = "destroy"
+  tf_target = "infra"
+  git_repo_link = "https://github.com/andreistefanciprian/jenkins_aws_codebuild.git"
+  git_repo_branch = "master"
+  iam_role_name = "iam_role_destroy_infra"
+  iam_role_policy_name = "iam_role_policy_destroy_infra"
 
-    environment_variable {
-      name  = "TF_ACTION"
-      value = var.tf_action
-      type  = "PLAINTEXT"
-    }
-
-    environment_variable {
-      name  = "TF_VAR_TARGET"
-      value = var.tf_target
-      type  = "PLAINTEXT"
-    }
-
-    privileged_mode = true
-
-  }
-
-  source {
-    type            = "GITHUB"
-    location        = var.git_repo_link
-    git_clone_depth = 1
-
-    git_submodules_config {
-      fetch_submodules = true
-    }
-  }
-
-  source_version = var.git_repo_branch
-
-  tags = {
-    Environment = "Test"
+  codebuild_tags = {
+    Env   = "test"
+    Layer = "infra"
   }
 }
