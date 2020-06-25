@@ -7,6 +7,7 @@ pipeline {
       AWS_REGION = credentials('aws_region')
       AWS_DEFAULT_REGION = credentials('aws_region')
       AWS_SECRET_ACCESS_KEY = credentials('aws_secret_key')
+      TF_IN_AUTOMATION = "true"
    }
 
    stages {
@@ -22,8 +23,7 @@ pipeline {
          steps {
                echo 'Building AWS CodeBuild Projects...'
                dir('terraform_code/'){
-                  // sh "terraform init -input=false codebuild"
-                  sh "make deploy TF_TARGET=codebuild TF_EXEC=terraform"
+                  sh "make deploy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
                }                
          }
       }

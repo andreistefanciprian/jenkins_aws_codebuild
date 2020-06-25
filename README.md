@@ -13,13 +13,23 @@ Have AWS account with CodeBuild jobs configured. The names of the CodeBuild proj
 Have aws cli installed on jenkins machine (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html).
 Have python3 and pip packages installed in Jenkins:
 ```
-yum install -y python3
+docker container exec -ti -u root jenkins_aws bash
+yum install -y python3 make
 pip3 install -r requirements.txt
+exit
 ```
 
 AWS keys defined in Jenkins as secret text.
 Git token defined both as secret text and username and password type of secrets.
 Aws region defined as secret.
+
+Have terraform installed:
+```
+docker container exec -ti -u root jenkins_aws bash
+curl -sk https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_386.zip -o /tmp/terraform_0.12.26_linux_386.zip
+unzip /tmp/terraform_0.12.26_linux_386.zip -d /usr/local/bin/
+exit
+```
 
 ## AWS resources prerequsites
 
@@ -91,6 +101,6 @@ docker-compose run terraform apply terraform.tfplan
 docker-compose run terraform destroy -auto-approve $TF_VAR_TARGET
 
 # using make commands
-make deploy TF_TARGET=$TF_VAR_TARGET
-make destroy TF_EXTRA_OPS=-auto-approve TF_TARGET=$TF_VAR_TARGET
+make deploy-auto-approve TF_TARGET=$TF_VAR_TARGET
+make destroy-auto-approve TF_TARGET=$TF_VAR_TARGET
 ```
