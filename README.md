@@ -1,57 +1,80 @@
 ## Description
 
-Jenkins pipeline that triggers CodeBuild jobs in AWS.
+This is a Jenkins pipeline that builds CodeBuild projects in AWS cloud, then runs these CodeBuild projects.
+The CodeBuild projects are building infrastructure within AWS cloud.
+
+The pipeline is doing the following:
+- builds AWS Codebuild projects with terraform
+- parse yaml file with codebuild projects to be run
+- start each of the codebuild projects
 
 ## Prerequisites
 
 Have Docker installed. We'll be running Jenkins on a Docker container.
-Spin off a jenkins docker container with a named volume to preserve jenkins configuration and pipeline for future use:
 
+Spin off a Jenkins docker container with a named volume to preserve jenkins configuration and pipeline for future use:
 ```docker run -p 8090:8080 -d -v jenkins_aws:/var/jenkins_home --name jenkins_aws jenkins/jenkins:2.235.1-lts-centos7```
 
-Have AWS account with CodeBuild jobs configured. The names of the CodeBuild projects should be made available in the yaml file.
-Have aws cli installed on jenkins machine (https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2-linux.html).
-Have python3 and pip packages installed in Jenkins:
+Go through Jenkins installation by following steps at: http://localhost:8090.
+
+Once Jenkins is configured, install these tools inside the Jenkins container:
 ```
+# install tools in Jenkins container
 docker container exec -ti -u root jenkins_aws bash
 yum install -y python3 make
 pip3 install -r requirements.txt
-exit
-```
 
-AWS keys defined in Jenkins as secret text.
-Git token defined both as secret text and username and password type of secrets.
-Aws region defined as secret.
-
-Have terraform installed:
-```
+# install terraform
 docker container exec -ti -u root jenkins_aws bash
 curl -sk https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_386.zip -o /tmp/terraform_0.12.26_linux_386.zip
 unzip /tmp/terraform_0.12.26_linux_386.zip -d /usr/local/bin/
-exit
 ```
 
-## AWS resources prerequsites
+Define these secrets in Jenkins (http://localhost:8090):
+ - AWS keys as secret text
+ - Git token defined both as secret text and username and password type of secrets
+ - AWS region defined as secret
 
-Have aws s3 bucket for terraform backend and dynamodb table for terraform state lock management:
+Create Jenkins pipeline job with default settings using Pipeline script from SCM with URL https://github.com/andreistefanciprian/jenkins_aws_codebuild.git and configured git credentials.
+
+## AWS cloud resources prerequsites
+
+Because the pipeline uses terraform, we need an AWS s3 bucket (terraform backend) and dynamodb table for terraform state lock management.
+Create these resources following these steps:
 ```
 cd prerequisites
 terraform init --var-file="../../terraform.tfvars"
 terraform plan --var-file="../../terraform.tfvars" -out terraform.tfplan
 terraform apply "terraform.tfplan"
-
-# destroy resources at the end of this tutorial
-terraform destroy --var-file="../../terraform.tfvars"
 ```
 
-For the step above, AWS access key and access secret key should be stored in a terraform.tfvars.
+For the steps above, AWS access key and access secret key should be stored in a terraform.tfvars file.
 There is a sample with the contents of this file in the main directory of the repository.
 
-Once s3 bucket and dynamodb table are built, the names of these resources will be shown in the terraform output.
-Take these names and populate the related fields in the backend section of the terraform code inside the main.tf files in both static and infra directories.
+Once the s3 bucket and dynamodb table are built, the names of these resources will be shown in the terraform output.
+Take these names and populate the related fields in the backend section of the terraform code inside the main.tf files in codebuild, static and infra directories.
 
-## DEBUG: Use these AWS CLI commands to manually interact with CodeBuild
+## Run pipeline
 
+Access Jenkins at http://localhost:8090 and run pipeline job.
+
+## Destroy resources at the end of this tutorial
+```
+
+# destroy terraform s3 bucket and dynamodb table used for tfstate management
+cd prerequisites
+terraform destroy --var-file="../../terraform.tfvars"
+
+# destroy AWS resources (AWS creds to be stored in .env file prior to run these commands)
+cd terraform_code
+make destroy-auto-approve TF_TARGET=infra
+make destroy-auto-approve TF_TARGET=static
+make destroy-auto-approve TF_TARGET=codebuil
+```
+
+## Other debug commands
+
+Use these AWS CLI commands to manually interact with CodeBuild:
 ```
 # list CodeBuild projects and builds
 aws codebuild list-projects
@@ -74,7 +97,7 @@ build_id=$(aws codebuild list-builds-for-project --project-name codebuildtest-Me
 aws codebuild batch-get-builds --ids $build_id --query 'builds[0].buildStatus' --output text
 ```
 
-## DEBUG: Use these commands to manually check python script
+Use these commands to manually check python script:
 ```
 # create python3 virtual env
 python3 -m venv .venv
@@ -86,13 +109,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # execute script
-python3 ...
+python3 execute_codebuild_from_yaml.py
 ```
 
-## DEBUG: Use these commands to verify you can build resources with terraform from CLI
-
-AWS creds to be stored in .env file prior to run these commands.
-
+Use these commands to verify you can build resources with terraform from CLI:
 ```
 TF_VAR_TARGET=static
 docker-compose run terraform init $TF_VAR_TARGET
