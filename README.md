@@ -35,6 +35,11 @@ Define these secrets in Jenkins (http://localhost:8090):
  - Git token defined both as secret text and username and password type of secrets
  - AWS region defined as secret
 
+AWS credentials inside Codebuild projects:
+- .env file with AWS secrets (AWS_ACCESS_KEY_ID=acces-key and AWS_SECRET_ACCESS_KEY=secret-key) should be made available in s3 bucket (check buildspec.yaml file)
+- terraform used by the CodeBuild projects is running inside a container (check docker-compose.yaml file)
+- the terraform credentials are provided as environment variables via the .env file (check docker-compose.yaml file)
+
 Create Jenkins pipeline job with default settings using Pipeline script from SCM with URL https://github.com/andreistefanciprian/jenkins_aws_codebuild.git and configured git credentials.
 
 ## AWS cloud resources prerequsites
