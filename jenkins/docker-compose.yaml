@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:
+
+  jenkins:
+    build:
+      context: .
+    image: jenkins:latest
+    container_name: jenkins
+    ports:
+      - 8090:8080
+    volumes:
+      - jenkins:/var/jenkins_home
+      
+volumes:
+    jenkins:

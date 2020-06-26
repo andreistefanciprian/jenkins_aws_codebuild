@@ -13,34 +13,22 @@ The pipeline is doing the following:
 Have Docker installed. We'll be running Jenkins on a Docker container.
 
 Spin off a Jenkins docker container with a named volume to preserve jenkins configuration and pipeline for future use:
-```docker run -p 8090:8080 -d -v jenkins_aws:/var/jenkins_home --name jenkins_aws jenkins/jenkins:2.235.1-lts-centos7```
+```docker-compose -f jenkins/docker-compose.yaml up --detach```
 
-Go through Jenkins installation by following steps at: http://localhost:8090.
+Go through Jenkins installation steps at: http://localhost:8090. 
 
-Once Jenkins is configured, install these tools inside the Jenkins container:
-```
-# install tools in Jenkins container
-docker container exec -ti -u root jenkins_aws bash
-yum install -y python3 make
-pip3 install -r requirements.txt
-
-# install terraform
-docker container exec -ti -u root jenkins_aws bash
-curl -sk https://releases.hashicorp.com/terraform/0.12.26/terraform_0.12.26_linux_386.zip -o /tmp/terraform_0.12.26_linux_386.zip
-unzip /tmp/terraform_0.12.26_linux_386.zip -d /usr/local/bin/
-```
-
-Define these secrets in Jenkins (http://localhost:8090):
- - AWS keys as secret text
- - Git token defined both as secret text and username and password type of secrets
- - AWS region defined as secret
+Define these secrets in Jenkins:
+ - aws_access_key secret text for AWS_ACCESS_KEY_ID
+ - aws_secret_key secret text for AWS_SECRET_ACCESS_KEY
+ - Git token defined both as secret text and username and password type of secrets (used for git hook and git clone private repo)
+ - AWS us-east-1 region defined as secret text
 
 AWS credentials inside Codebuild projects:
 - .env file with AWS secrets (AWS_ACCESS_KEY_ID=acces-key and AWS_SECRET_ACCESS_KEY=secret-key) should be made available in s3 bucket (check buildspec.yaml file)
 - terraform used by the CodeBuild projects is running inside a container (check docker-compose.yaml file)
 - the terraform credentials are provided as environment variables via the .env file (check docker-compose.yaml file)
 
-Create Jenkins pipeline job with default settings using Pipeline script from SCM with URL https://github.com/andreistefanciprian/jenkins_aws_codebuild.git and configured git credentials.
+Create Jenkins pipeline job with default settings using Pipeline script from SCM with URL https://github.com/andreistefanciprian/jenkins_aws_codebuild.git.
 
 ## AWS cloud resources prerequsites
 
@@ -75,6 +63,9 @@ cd terraform_code
 make destroy-auto-approve TF_TARGET=infra
 make destroy-auto-approve TF_TARGET=static
 make destroy-auto-approve TF_TARGET=codebuil
+
+# spin down Jenkins docker container:
+docker-compose -f jenkins/docker-compose.yaml down
 ```
 
 ## Other debug commands
