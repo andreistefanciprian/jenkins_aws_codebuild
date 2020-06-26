@@ -2,8 +2,14 @@
   "Version": "2012-10-17",
   "Statement": [
       {
+          "Sid": "TerraformPermissions",
           "Effect": "Allow",
-          "Action": "*",
+          "Action": [
+              "s3:*",
+              "logs:*",
+              "dynamodb:*",
+              "ec2:*"
+          ],
           "Resource": "*"
       }
   ]
