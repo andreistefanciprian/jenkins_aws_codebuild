@@ -15,24 +15,11 @@ Have Docker installed. We'll be running Jenkins on a Docker container.
 Spin off a Jenkins docker container with a named volume to preserve jenkins configuration and pipeline for future use:
 ```docker-compose -f jenkins/docker-compose.yaml up --detach```
 
-Go through Jenkins installation steps at: http://localhost:8090. 
+AWS account at https://console.aws.amazon.com/.
 
-Define these secrets in Jenkins:
- - aws_access_key secret text for AWS_ACCESS_KEY_ID
- - aws_secret_key secret text for AWS_SECRET_ACCESS_KEY
- - Git token defined both as secret text and username and password type of secrets (used for git hook and git clone private repo)
- - AWS us-east-1 region defined as secret text
+AWS service account to be used by Terraform and Jenkins.
 
-AWS credentials inside Codebuild projects:
-- .env file with AWS secrets (AWS_ACCESS_KEY_ID=acces-key and AWS_SECRET_ACCESS_KEY=secret-key) should be made available in s3 bucket (check buildspec.yaml file)
-- terraform used by the CodeBuild projects is running inside a container (check docker-compose.yaml file)
-- the terraform credentials are provided as environment variables via the .env file (check docker-compose.yaml file)
-
-Create Jenkins pipeline job with default settings using Pipeline script from SCM with URL https://github.com/andreistefanciprian/jenkins_aws_codebuild.git.
-
-## AWS cloud resources prerequsites
-
-Because the pipeline uses terraform, we need an AWS s3 bucket (terraform backend) and dynamodb table for terraform state lock management.
+AWS s3 bucket (terraform backend) and dynamodb table for terraform state lock management.
 Create these resources following these steps:
 ```
 cd prerequisites
@@ -47,9 +34,24 @@ There is a sample with the contents of this file in the main directory of the re
 Once the s3 bucket and dynamodb table are built, the names of these resources will be shown in the terraform output.
 Take these names and populate the related fields in the backend section of the terraform code inside the main.tf files in codebuild, static and infra directories.
 
-## Run pipeline
+## Configure Jenkins and run pipeline
 
-Access Jenkins at http://localhost:8090 and run pipeline job.
+Go through Jenkins installation steps at: http://localhost:8090. 
+
+Define these secrets in Jenkins:
+ - aws_access_key secret text for AWS_ACCESS_KEY_ID
+ - aws_secret_key secret text for AWS_SECRET_ACCESS_KEY
+ - Git token defined both as secret text and username and password type of secrets (used for git hook and git clone private repo)
+ - aws_region secret text for AWS region us-east-1
+
+AWS credentials inside Codebuild projects:
+- .env file with AWS secrets (AWS_ACCESS_KEY_ID=acces-key and AWS_SECRET_ACCESS_KEY=secret-key) should be made available in s3 bucket (check buildspec.yaml file)
+- terraform used by the CodeBuild projects is running inside a container (check docker-compose.yaml file)
+- the terraform credentials are provided as environment variables via the .env file (check docker-compose.yaml file)
+
+Create Jenkins pipeline job with default settings using Pipeline script from SCM with URL https://github.com/andreistefanciprian/jenkins_aws_codebuild.git.
+
+Run pipeline job!
 
 ## Destroy resources at the end of this tutorial
 ```
