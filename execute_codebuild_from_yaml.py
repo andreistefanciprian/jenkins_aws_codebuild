@@ -3,6 +3,7 @@ import os
 import boto3
 import json
 import time
+import sys
 
 def main(yaml_file):
     """
@@ -26,17 +27,24 @@ def main(yaml_file):
 
                 for codebuild_project in read_yaml['codebuild_projects']:
                     if codebuild_project in codebuild_projects:
-                        print(f"CodeBuild Project {codebuild_project} is available in AWS CodeBuild Project list.")
+                        print(f"\nCodeBuild Project {codebuild_project} is available in AWS CodeBuild Project list.")
                         
                         # start CodeBuild project build
                         start_build(client, codebuild_project)
 
                         # verify CodeBuild build status
-                        verify_build_status(client, codebuild_project)
-
+                        status = verify_build_status(client, codebuild_project)
+                        if status != "SUCCEEDED":
+                            msg = f"CodeBuild Project {codebuild_project} failed!"
+                            print(msg)
+                            sys.exit(1)
+                        else:
+                            msg = f"CodeBuild Project {codebuild_project}: {status}!"
+                            print(msg)
+                            continue
 
                     else:
-                        print(f"{codebuild_project} is not available in AWS CodeBuild Project list.")
+                        print(f"\n{codebuild_project} is not available in AWS CodeBuild Project list.")
 
     else:
         result = f"{yaml_file} file does not exist!"
@@ -76,6 +84,7 @@ def verify_build_status(client, codebuild_project):
 
     time_interval = 5   # verify status every n seconds
     time_left = 300     # max time a build can take in seconds
+    result = "FAIL"
 
     while time_left > 0:
         
@@ -91,15 +100,22 @@ def verify_build_status(client, codebuild_project):
             codebuild_build_number = last_build_results['Build Number']
             codebuild_status = last_build_results['Build Status']
             status_msg = f"CodeBuild Project {codebuild_project} build {codebuild_build_number}: {codebuild_status}"
-            
-            if last_build_results['Build Status'] == 'SUCCEEDED':
+
+            if last_build_results['Build Status'] == 'IN_PROGRESS':
                 print(status_msg)
+                time.sleep(time_interval)
+                result = last_build_results['Build Status']
+                continue
+            elif last_build_results['Build Status'] == 'SUCCEEDED':
+                print(status_msg)
+                result = last_build_results['Build Status']
                 break
             else:
                 print(status_msg)
-                time.sleep(time_interval)
-                continue
+                result = last_build_results['Build Status']
+                break
 
+    return result
 
 def get_last_build_results(client, codebuild_project):
     """
