@@ -1,7 +1,8 @@
 # AWS CodeBuld steps for our projects
 codebuild_projects:
 - deploy_static
-- deploy_infra
+- this_one_doesnt_exist
+- destroy_static
 codebuild_steps2:
 - deploy_static
 - deploy_infra

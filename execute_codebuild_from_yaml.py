@@ -5,16 +5,6 @@ import json
 import time
 import sys
 
-# define Python user-defined exceptions
-class Error(Exception):
-    """Base class for other exceptions"""
-    pass
-
-
-class CodeBuildFail(Error):
-    """Raised when the input value is too small"""
-    pass
-
 def main(yaml_file):
     """
     Execute AWS codebuild projects provided in yaml file.
@@ -43,14 +33,13 @@ def main(yaml_file):
                         start_build(client, codebuild_project)
 
                         # verify CodeBuild build status
-                        try:
-                            status = verify_build_status(client, codebuild_project)
-                        except Exception as e:
-                            msg = f"{str(e)}\nCodeBuild Project {codebuild_project} failed!"
+                        status = verify_build_status(client, codebuild_project)
+                        if status != "SUCCEEDED":
+                            msg = f"CodeBuild Project {codebuild_project} failed!"
                             print(msg)
                             sys.exit(1)
                         else:
-                            msg = f"CodeBuild Project {codebuild_project}: {status}! Moving to next job!"
+                            msg = f"CodeBuild Project {codebuild_project}: {status}! \nMoving to next CodeBuild build ...\n"
                             print(msg)
                             continue
 
@@ -95,7 +84,7 @@ def verify_build_status(client, codebuild_project):
 
     time_interval = 5   # verify status every n seconds
     time_left = 300     # max time a build can take in seconds
-    result = "FAILED"
+    result = "FAIL"
 
     while time_left > 0:
         
@@ -111,25 +100,21 @@ def verify_build_status(client, codebuild_project):
             codebuild_build_number = last_build_results['Build Number']
             codebuild_status = last_build_results['Build Status']
             status_msg = f"CodeBuild Project {codebuild_project} build {codebuild_build_number}: {codebuild_status}"
-            
-            # if last_build_results['Build Status'] == 'SUCCEEDED':
-            #     print(status_msg)
-            #     break
-            # else:
-            #     print(status_msg)
-            #     time.sleep(time_interval)
-            #     continue
 
             if last_build_results['Build Status'] == 'IN_PROGRESS':
                 print(status_msg)
                 time.sleep(time_interval)
                 result = last_build_results['Build Status']
                 continue
+            elif last_build_results['Build Status'] == 'SUCCEEDED':
+                print(status_msg)
+                result = last_build_results['Build Status']
+                break
             else:
                 print(status_msg)
                 result = last_build_results['Build Status']
-                raise CodeBuildFail(status_msg)
-    
+                break
+
     return result
 
 def get_last_build_results(client, codebuild_project):
