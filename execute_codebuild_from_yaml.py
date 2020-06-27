@@ -27,7 +27,7 @@ def main(yaml_file):
 
                 for codebuild_project in read_yaml['codebuild_projects']:
                     if codebuild_project in codebuild_projects:
-                        print(f"CodeBuild Project {codebuild_project} is available in AWS CodeBuild Project list.")
+                        print(f"\nCodeBuild Project {codebuild_project} is available in AWS CodeBuild Project list.")
                         
                         # start CodeBuild project build
                         start_build(client, codebuild_project)
@@ -39,12 +39,12 @@ def main(yaml_file):
                             print(msg)
                             sys.exit(1)
                         else:
-                            msg = f"CodeBuild Project {codebuild_project}: {status}! \nMoving to next CodeBuild build ...\n"
+                            msg = f"CodeBuild Project {codebuild_project}: {status}!"
                             print(msg)
                             continue
 
                     else:
-                        print(f"{codebuild_project} is not available in AWS CodeBuild Project list.")
+                        print(f"\n{codebuild_project} is not available in AWS CodeBuild Project list.")
 
     else:
         result = f"{yaml_file} file does not exist!"
