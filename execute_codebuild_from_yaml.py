@@ -1,6 +1,7 @@
 import yaml
 import os
 import boto3
+from boto3.session import Session
 import json
 import time
 import sys
