@@ -8,7 +8,7 @@ pipeline {
       AWS_DEFAULT_REGION = credentials('aws_region')
       AWS_SECRET_ACCESS_KEY = credentials('aws_secret_key')
       TF_IN_AUTOMATION = "true"
-      AWS_ARN = credentials('aws_secret_key')
+      AWS_ARN = credentials('aws_arn')
    }
 
    stages {
