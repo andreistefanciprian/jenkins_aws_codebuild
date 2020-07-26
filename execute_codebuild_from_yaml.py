@@ -6,7 +6,7 @@ import json
 import time
 import sys
 
-def main(yaml_file, arn, session_name):
+def main(yaml_file, arn, session_name, aws_region):
     """
     Execute AWS codebuild projects provided in yaml file.
     """
@@ -22,7 +22,7 @@ def main(yaml_file, arn, session_name):
             else:
 
                 # assume AWS Role
-                aws_role_session = assume_role(arn, session_name)
+                aws_role_session = assume_role(arn, session_name, aws_region)
                 client = aws_role_session.client('sts')
 
                 # get current assumed role UserId
@@ -60,7 +60,7 @@ def main(yaml_file, arn, session_name):
         result = f"{yaml_file} file does not exist!"
         print(result)
 
-def assume_role(arn, session_name):
+def assume_role(arn, session_name, region):
     """
     Assume AWS IAM Role.
     """
@@ -72,8 +72,10 @@ def assume_role(arn, session_name):
         raise e
     else:
         response = client.assume_role(RoleArn=arn, RoleSessionName=session_name)
-        session = Session(aws_access_key_id=response['Credentials']['AccessKeyId'], aws_secret_access_key=response['Credentials']['SecretAccessKey'], aws_session_token=response['Credentials']['SessionToken'])
-    
+        session = Session(aws_access_key_id=response['Credentials']['AccessKeyId'],
+                    aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+                    aws_session_token=response['Credentials']['SessionToken'],
+                    region_name=region)
         return session
 
 def get_codebuild_projects_from_aws(client):
@@ -182,6 +184,7 @@ if __name__ == "__main__":
     arn = sys.argv[1] if len(sys.argv) == 2 else sys.exit("AWS ARN Role has to be provided as positional parameter!")
     yaml_file = os.path.join(os.getcwd(), 'codebuild_projects.yaml')
     session_name = "funky_test"
+    aws_region = 'us-east-1'
 
     # execute codebuild projects in yaml file
-    main(yaml_file, arn, session_name)
+    main(yaml_file, arn, session_name, aws_region)
