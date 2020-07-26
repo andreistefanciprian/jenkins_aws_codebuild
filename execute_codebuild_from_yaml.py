@@ -27,9 +27,9 @@ def main(yaml_file, arn, session_name):
 
                 # get current assumed role UserId
                 account_id = client.get_caller_identity()["UserId"]
-                print(f'Current Assumed AWS IAM User: {account_id}')
+                print(f"\nCurrent Assumed AWS IAM User: {account_id}")
 
-                print("Connecting to AWS to execute the CodeBuild projects...")
+                print("\nConnecting to AWS to execute the CodeBuild projects...")
                 client = aws_role_session.client('codebuild')
              
                 # get list of CodeBuild projects from AWS
@@ -178,12 +178,8 @@ def dict2json(data: dict):
 
 if __name__ == "__main__":
 
-    if len(sys.argv) == 2:
-        arn = sys.argv[1]
-    else:
-        print("AWS ARN Role has to be provided as positional parameter!")
-        sys.exit(1)
-
+    # define vars
+    arn = sys.argv[1] if len(sys.argv) == 2 else sys.exit("AWS ARN Role has to be provided as positional parameter!")
     yaml_file = os.path.join(os.getcwd(), 'codebuild_projects.yaml')
     session_name = "funky_test"
 
