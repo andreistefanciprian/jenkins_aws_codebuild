@@ -71,12 +71,11 @@ def assume_role(arn, session_name, region, external_id):
         print(str(e))
         raise e
     else:
-        response = client.assume_role(RoleArn=arn, RoleSessionName=session_name)
+        response = client.assume_role(RoleArn=arn, RoleSessionName=session_name, ExternalId=external_id)
         session = Session(aws_access_key_id=response['Credentials']['AccessKeyId'],
                     aws_secret_access_key=response['Credentials']['SecretAccessKey'],
                     aws_session_token=response['Credentials']['SessionToken'],
-                    region_name=region,
-                    ExternalId=external_id)
+                    region_name=region)
         return session
 
 def get_codebuild_projects_from_aws(client):
