@@ -6,7 +6,7 @@ import json
 import time
 import sys
 
-def main(yaml_file, arn, session_name, aws_region):
+def main(yaml_file, arn, session_name, aws_region, external_id):
     """
     Execute AWS codebuild projects provided in yaml file.
     """
@@ -22,7 +22,7 @@ def main(yaml_file, arn, session_name, aws_region):
             else:
 
                 # assume AWS Role
-                aws_role_session = assume_role(arn, session_name, aws_region)
+                aws_role_session = assume_role(arn, session_name, aws_region, external_id)
                 client = aws_role_session.client('sts')
 
                 # get current assumed role UserId
@@ -60,7 +60,7 @@ def main(yaml_file, arn, session_name, aws_region):
         result = f"{yaml_file} file does not exist!"
         print(result)
 
-def assume_role(arn, session_name, region):
+def assume_role(arn, session_name, region, external_id):
     """
     Assume AWS IAM Role.
     """
@@ -75,7 +75,8 @@ def assume_role(arn, session_name, region):
         session = Session(aws_access_key_id=response['Credentials']['AccessKeyId'],
                     aws_secret_access_key=response['Credentials']['SecretAccessKey'],
                     aws_session_token=response['Credentials']['SessionToken'],
-                    region_name=region)
+                    region_name=region,
+                    ExternalId=external_id)
         return session
 
 def get_codebuild_projects_from_aws(client):
@@ -185,6 +186,7 @@ if __name__ == "__main__":
     yaml_file = os.path.join(os.getcwd(), 'codebuild_projects.yaml')
     session_name = "funky_test"
     aws_region = 'us-east-1'
+    external_id = 'smth'
 
     # execute codebuild projects in yaml file
-    main(yaml_file, arn, session_name, aws_region)
+    main(yaml_file, arn, session_name, aws_region, external_id)
