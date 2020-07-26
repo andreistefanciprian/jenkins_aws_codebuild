@@ -5,7 +5,7 @@ import json
 import time
 import sys
 
-def main(yaml_file):
+def main(yaml_file, arn, session_name):
     """
     Execute AWS codebuild projects provided in yaml file.
     """
@@ -19,8 +19,17 @@ def main(yaml_file):
                 print(str(e))
                 raise e
             else:
+
+                # assume AWS Role
+                aws_role_session = assume_role(arn, session_name)
+                client = aws_role_session.client('sts')
+
+                # get current assumed role UserId
+                account_id = client.get_caller_identity()["UserId"]
+                print(f'Current Assumed AWS IAM User: {account_id}')
+
                 print("Connecting to AWS to execute the CodeBuild projects...")
-                client = boto3.client('codebuild')
+                client = aws_role_session.client('codebuild')
              
                 # get list of CodeBuild projects from AWS
                 codebuild_projects = get_codebuild_projects_from_aws(client)
@@ -49,6 +58,22 @@ def main(yaml_file):
     else:
         result = f"{yaml_file} file does not exist!"
         print(result)
+
+def assume_role(arn, session_name):
+    """
+    Assume AWS IAM Role.
+    """
+
+    try:
+        client = boto3.client('sts')
+    except Exception as e:
+        print(str(e))
+        raise e
+    else:
+        response = client.assume_role(RoleArn=arn, RoleSessionName=session_name)
+        session = Session(aws_access_key_id=response['Credentials']['AccessKeyId'], aws_secret_access_key=response['Credentials']['SecretAccessKey'], aws_session_token=response['Credentials']['SessionToken'])
+    
+        return session
 
 def get_codebuild_projects_from_aws(client):
     """
@@ -151,9 +176,15 @@ def dict2json(data: dict):
 
 
 if __name__ == "__main__":
-    
-    # yaml file path
+
+    if len(sys.argv) == 2:
+        arn = sys.argv[1]
+    else:
+        print("AWS ARN Role has to be provided as positional parameter!")
+        sys.exit(1)
+
     yaml_file = os.path.join(os.getcwd(), 'codebuild_projects.yaml')
+    session_name = "funky_test"
 
     # execute codebuild projects in yaml file
-    main(yaml_file)
+    main(yaml_file, arn, session_name)
