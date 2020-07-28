@@ -22,25 +22,19 @@ def main(yaml_file, arn, session_name, aws_region, external_id):
             else:
 
                 # assume AWS Role and get list of CodeBuild projects
+                print("\nAssume AWS Role and get list of CodeBuild projects...")
                 aws_role_session = assume_role(arn, session_name, aws_region, external_id)
-                
-                # get current assumed role UserId (debug)
-                # client = aws_role_session.client('sts')
-                # account_id = client.get_caller_identity()["UserId"]
-                # print(f"\nCurrent Assumed AWS IAM User: {account_id}")
-
-                # print("\nConnecting to AWS to execute the CodeBuild projects...")
                 client = aws_role_session.client('codebuild')
-             
-                # get list of CodeBuild projects from AWS
                 codebuild_projects = get_codebuild_projects_from_aws(client)
 
-                # iterate over CodeBuild projects from yaml file
+                # parse yaml file and start CodeBuild projects
                 for codebuild_project in read_yaml['codebuild_projects']:
                     if codebuild_project in codebuild_projects:
                         print(f"\nCodeBuild Project {codebuild_project} is available in AWS CodeBuild Project list.")
                         
                         # assume AWS Role and start CodeBuild project build
+                        msg = f"\nAssume AWS Role and start CodeBuild project {codebuild_project} ..."
+                        print(msg)
                         session = assume_role(arn, session_name, aws_region, external_id)
                         session_client = session.client('codebuild')
                         start_build(session_client, codebuild_project)
