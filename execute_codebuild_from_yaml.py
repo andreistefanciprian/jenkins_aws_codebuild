@@ -32,7 +32,7 @@ def main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds
                 role = session.assume_role()
                 print(role)
 
-                codebuild_projects = session.codebuild_projects()
+                codebuild_projects = session.get_codebuild_projects_from_aws()
                 print(codebuild_projects)
 
                 # parse yaml file and start CodeBuild projects
