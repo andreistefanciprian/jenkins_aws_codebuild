@@ -16,39 +16,37 @@ def main(yaml_file, arn, session_name, aws_region, external_id):
         with open(yaml_file, 'r') as file:
             try:
                 read_yaml = yaml.full_load(file)
-                log(f"Reading yaml file at: {yaml_file}")
+                log(f"Reading {yaml_file} file ...")
             except Exception as e:
                 log(str(e))
                 raise e
             else:
 
                 # assume AWS Role and get list of CodeBuild projects
-                log("\nAssume AWS Role and get list of CodeBuild projects...")
+                log("Assume AWS Role and get list of CodeBuild projects ...")
                 aws_role_session = assume_role(arn, session_name, aws_region, external_id)
                 client = aws_role_session.client('codebuild')
                 codebuild_projects = get_codebuild_projects_from_aws(client)
 
                 # parse yaml file and start CodeBuild projects
                 for codebuild_project in read_yaml['codebuild_projects']:
+
+                    # verify if codebuild project in yaml file available in AWS
                     if codebuild_project in codebuild_projects:
-                        log(f"\nCodeBuild Project {codebuild_project} is available in AWS CodeBuild Project list.")
                         
                         # assume AWS Role and start CodeBuild project build
-                        msg = f"\nAssume AWS Role and start CodeBuild project {codebuild_project} ..."
-                        log(msg)
+                        log(f"Assume AWS Role and start CodeBuild project {codebuild_project} ...")
                         session = assume_role(arn, session_name, aws_region, external_id)
                         session_client = session.client('codebuild')
                         start_build(session_client, codebuild_project)
 
                         # verify CodeBuild build status
                         status = verify_build_status(session_client, codebuild_project)
-                        if status != "SUCCEEDED":
-                            msg = f"CodeBuild Project {codebuild_project} failed!"
-                            log(msg)
+                        if status != "SUCCEEDED": 
+                            log(f"CodeBuild Project {codebuild_project} failed!")
                             sys.exit(1)
                         else:
-                            msg = f"CodeBuild Project {codebuild_project}: {status}!"
-                            log(msg)
+                            log(f"CodeBuild Project {codebuild_project}: {status}!")
                             continue
 
                     else:
