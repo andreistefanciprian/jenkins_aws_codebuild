@@ -19,7 +19,7 @@ def main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds
                 log(f"Reading {yaml_file} file ...")
             except Exception as e:
                 log(str(e))
-                raise e
+                raise
             else:
 
                 # assume AWS Role and get list of CodeBuild projects
@@ -90,6 +90,7 @@ class AwsSession:
         self.client = None
         self.session = None
         self.codebuild_projects = None
+        self._is_connected = False
 
     def assume_role(self):
         """
@@ -100,7 +101,7 @@ class AwsSession:
             self.client = boto3.client('sts')
         except Exception as e:
             log(str(e))
-            raise e
+            raise
         else:
             response = self.client.assume_role(RoleArn=self.arn, RoleSessionName=self.session_name, DurationSeconds=self.duration_seconds, ExternalId=self.external_id)
 
@@ -110,105 +111,128 @@ class AwsSession:
                         region_name=self.aws_region)
             return self.session
 
+    def _client(self, service):
+        """
+        Create a low-level service client by name.
+        return: True or False
+        """
+
+        if not self._is_connected:
+            try:
+                self.client = self.session.client(service)
+            except Exception as e:
+                log(str(e))
+                raise
+            else:
+                self._is_connected = True
+                return self._is_connected
+
     def get_codebuild_projects_from_aws(self):
         """
         Get list of CodeBuild projects from AWS.
         Returns a list of projects.
         """
-        
-        try:
-            self.client = self.session.client('codebuild')
-            self.codebuild_projects = self.client.list_projects()
-        except Exception as e:
-            log(str(e))
-            raise e
-        else:
-            return self.codebuild_projects['projects']
 
-def start_build(client, codebuild_project):
-    """
-    Start CodeBuild project build.
-    """
-    try:
-        client.start_build(projectName=codebuild_project)
-    except Exception as e:
-        log(str(e))
-        raise e
-    else:
-        last_build_results = get_last_build_results(client, codebuild_project)
-        log(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...")
-
-def verify_build_status(client, codebuild_project):
-    """
-    This function verifies the status of the last CodeBuild build until it is successfull.
-    """
-
-    time_interval = 5   # verify status every n seconds
-    time_left = 300     # max time a build can take in seconds
-    result = "FAIL"
-
-    while time_left > 0:
-        
-        time_left -= time_interval
-
-        try:
-            last_build_results = get_last_build_results(client, codebuild_project)
-        except Exception as e:
-            log(str(e))
-            raise e
-        else:
-            codebuild_project = last_build_results['Build Project Name']
-            codebuild_build_number = last_build_results['Build Number']
-            codebuild_status = last_build_results['Build Status']
-            status_msg = f"CodeBuild Project {codebuild_project} build {codebuild_build_number}: {codebuild_status}"
-
-            if last_build_results['Build Status'] == 'IN_PROGRESS':
-                log(status_msg)
-                time.sleep(time_interval)
-                result = last_build_results['Build Status']
-                continue
-            elif last_build_results['Build Status'] == 'SUCCEEDED':
-                log(status_msg)
-                result = last_build_results['Build Status']
-                break
+        if self._client('codebuild'):
+            try:
+                # self.client = self.session.client('codebuild')
+                self.codebuild_projects = self.client.list_projects()
+            except Exception as e:
+                log(str(e))
+                raise
             else:
-                log(status_msg)
-                result = last_build_results['Build Status']
-                break
+                return self.codebuild_projects['projects']
+        else:
+            raise "Cannot establish CodeBuild connection ...!"
 
-    return result
+    def get_last_build_results(self, codebuild_project):
+        """
+        Get CodeBuild result of last build.
 
-def get_last_build_results(client, codebuild_project):
-    """
-    Get CodeBuild result of last build.
+        Return dictionary.
+        """
 
-    Return dictionary.
-    """
+        if self._client('codebuild'):
+            result = {}
 
-    result = {}
+            try:
+                project_builds = self.client.list_builds_for_project(projectName=codebuild_project)
+            except Exception as e:
+                log(str(e))
+                raise
+            else: 
+                build_id = project_builds['ids'][0]
+                build_data = self.client.batch_get_builds(ids = [build_id])
+                result['Build Number'] = build_data['builds'][0]['buildNumber']
+                result['Build Start Time'] = build_data['builds'][0]['startTime']
+                result['Build Status'] = build_data['builds'][0]['buildStatus']
+                result['Build Project Name'] = build_data['builds'][0]['projectName']
+                return result
 
-    try:
-        project_builds = client.list_builds_for_project(projectName=codebuild_project)
-    except Exception as e:
-        log(str(e))
-        raise e
-    else: 
-        build_id = project_builds['ids'][0]
-        build_data = client.batch_get_builds(ids = [build_id])
-        result['Build Number'] = build_data['builds'][0]['buildNumber']
-        result['Build Start Time'] = build_data['builds'][0]['startTime']
-        result['Build Status'] = build_data['builds'][0]['buildStatus']
-        result['Build Project Name'] = build_data['builds'][0]['projectName']
+    def start_build(self, codebuild_project):
+        """
+        Start CodeBuild project build.
+        """
+
+        if self._client('codebuild'):
+            try:
+                self.client.start_build(projectName=codebuild_project)
+            except Exception as e:
+                log(str(e))
+                raise
+            else:
+                last_build_results = self.get_last_build_results(codebuild_project)
+                log(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...")
+
+    def verify_build_status(self, codebuild_project):
+        """
+        This function verifies the status of the last CodeBuild build until it is successfull.
+        """
+
+        time_interval = 5   # verify status every n seconds
+        time_left = 300     # max time a build can take in seconds
+        result = "FAIL"
+
+        while time_left > 0:
+            
+            time_left -= time_interval
+
+            try:
+                last_build_results = self.get_last_build_results(codebuild_project)
+            except Exception as e:
+                log(str(e))
+                raise
+            else:
+                codebuild_project = last_build_results['Build Project Name']
+                codebuild_build_number = last_build_results['Build Number']
+                codebuild_status = last_build_results['Build Status']
+                status_msg = f"CodeBuild Project {codebuild_project} build {codebuild_build_number}: {codebuild_status}"
+
+                if last_build_results['Build Status'] == 'IN_PROGRESS':
+                    log(status_msg)
+                    time.sleep(time_interval)
+                    result = last_build_results['Build Status']
+                    continue
+                elif last_build_results['Build Status'] == 'SUCCEEDED':
+                    log(status_msg)
+                    result = last_build_results['Build Status']
+                    break
+                else:
+                    log(status_msg)
+                    result = last_build_results['Build Status']
+                    break
+
         return result
 
-def dict2json(data: dict):
-    """
-    Parse CodeBuild build result from dict to nice JSON output.
-    """
 
-    build_data_json = json.dumps(data, indent=4, sort_keys=True, default=str)
-    parsed = json.loads(str(build_data_json))
-    return json.dumps(parsed, indent=4, sort_keys=True)
+# def dict2json(data: dict):
+#     """
+#     Parse CodeBuild build result from dict to nice JSON output.
+#     """
+
+#     build_data_json = json.dumps(data, indent=4, sort_keys=True, default=str)
+#     parsed = json.loads(str(build_data_json))
+#     return json.dumps(parsed, indent=4, sort_keys=True)
 
 
 if __name__ == "__main__":
