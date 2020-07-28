@@ -24,30 +24,36 @@ def main(yaml_file, arn, session_name, aws_region, external_id):
 
                 # assume AWS Role and get list of CodeBuild projects
                 log("Assume AWS Role and get list of CodeBuild projects ...")
-                aws_role_session = assume_role(arn, session_name, aws_region, external_id)
-                client = aws_role_session.client('codebuild')
-                codebuild_projects = get_codebuild_projects_from_aws(client)
+                # aws_role_session = assume_role(arn, session_name, aws_region, external_id)
+                # client = aws_role_session.client('codebuild')
+                # codebuild_projects = get_codebuild_projects_from_aws(client)
+
+                session = AwsSession(arn, session_name, aws_region, external_id)
+                role = session.assume_role()
+                print(role)
 
                 # parse yaml file and start CodeBuild projects
                 for codebuild_project in read_yaml['codebuild_projects']:
 
                     # verify if codebuild project in yaml file available in AWS
                     if codebuild_project in codebuild_projects:
-                        
-                        # assume AWS Role and start CodeBuild project build
-                        log(f"Assume AWS Role and start CodeBuild project {codebuild_project} ...")
-                        session = assume_role(arn, session_name, aws_region, external_id)
-                        session_client = session.client('codebuild')
-                        start_build(session_client, codebuild_project)
 
-                        # verify CodeBuild build status
-                        status = verify_build_status(session_client, codebuild_project)
-                        if status != "SUCCEEDED": 
-                            log(f"CodeBuild Project {codebuild_project} failed!")
-                            sys.exit(1)
-                        else:
-                            log(f"CodeBuild Project {codebuild_project}: {status}!")
-                            continue
+                        print(codebuild_project)
+                        
+                        # # assume AWS Role and start CodeBuild project build
+                        # log(f"Assume AWS Role and start CodeBuild project {codebuild_project} ...")
+                        # session = assume_role(arn, session_name, aws_region, external_id)
+                        # session_client = session.client('codebuild')
+                        # start_build(session_client, codebuild_project)
+
+                        # # verify CodeBuild build status
+                        # status = verify_build_status(session_client, codebuild_project)
+                        # if status != "SUCCEEDED": 
+                        #     log(f"CodeBuild Project {codebuild_project} failed!")
+                        #     sys.exit(1)
+                        # else:
+                        #     log(f"CodeBuild Project {codebuild_project}: {status}!")
+                        #     continue
 
                     else:
                         log(f"\n{codebuild_project} is not available in AWS CodeBuild Project list.")
@@ -64,37 +70,56 @@ def log(message):
     now = datetime.datetime.now().strftime("%H:%M:%S")
     print(now, message)
 
-def assume_role(arn, session_name, region, external_id):
+class AwsSession:
+
     """
-    Assume AWS IAM Role.
+    Assume IAM Role.
+    Establish AWS Session with assumed IAM role.
+    Sending commands to AWS.
     """
 
-    try:
-        client = boto3.client('sts')
-    except Exception as e:
-        log(str(e))
-        raise e
-    else:
-        response = client.assume_role(RoleArn=arn, RoleSessionName=session_name, DurationSeconds=3600, ExternalId=external_id)
-        session = Session(aws_access_key_id=response['Credentials']['AccessKeyId'],
-                    aws_secret_access_key=response['Credentials']['SecretAccessKey'],
-                    aws_session_token=response['Credentials']['SessionToken'],
-                    region_name=region)
-        return session
+    def __init__(self, arn, session_name="jenkins", aws_region, external_id=pbdp, duration_seconds=3600):
+        self.arn = arn
+        self.session_name = session_name if session_name is not "jenkins"
+        self.aws_region = aws_region
+        self.external_id = external_id if external_id is not "pbdp"
+        self.duration_seconds = duration_seconds if port is not 3600
+        self.client = None
+        self.session = None
+        self.codebuild_projects = None
 
-def get_codebuild_projects_from_aws(client):
-    """
-    Get list of CodeBuild projects from AWS.
-    Returns a list of projects.
-    """
-    
-    try:
-        codebuild_projects = client.list_projects()
-    except Exception as e:
-        log(str(e))
-        raise e
-    else:
-        return codebuild_projects['projects']
+    def assume_role(self):
+        """
+        Assume AWS IAM Role.
+        """
+
+        try:
+            self.client = boto3.client('sts')
+        except Exception as e:
+            log(str(e))
+            raise e
+        else:
+            response = self.client.assume_role(RoleArn=self.arn, RoleSessionName=self.session_name, DurationSeconds=self.duration_seconds, ExternalId=self.external_id)
+
+            self.session = Session(aws_access_key_id=response['Credentials']['AccessKeyId'],
+                        aws_secret_access_key=response['Credentials']['SecretAccessKey'],
+                        aws_session_token=response['Credentials']['SessionToken'],
+                        region_name=self.aws_region)
+            return self.session
+
+    def get_codebuild_projects_from_aws(self):
+        """
+        Get list of CodeBuild projects from AWS.
+        Returns a list of projects.
+        """
+        
+        try:
+            self.codebuild_projects = self.client.list_projects()
+        except Exception as e:
+            log(str(e))
+            raise e
+        else:
+            return self.codebuild_projects['projects']
 
 def start_build(client, codebuild_project):
     """
