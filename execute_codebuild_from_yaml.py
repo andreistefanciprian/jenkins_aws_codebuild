@@ -7,7 +7,7 @@ import time
 import sys
 import datetime
 
-def main(yaml_file, arn, session_name, aws_region, external_id):
+def main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds):
     """
     Execute AWS codebuild projects provided in yaml file.
     """
@@ -28,9 +28,12 @@ def main(yaml_file, arn, session_name, aws_region, external_id):
                 # client = aws_role_session.client('codebuild')
                 # codebuild_projects = get_codebuild_projects_from_aws(client)
 
-                session = AwsSession(arn, session_name, aws_region, external_id, duration_seconds=3600)
+                session = AwsSession(arn, session_name, aws_region, external_id, duration_seconds)
                 role = session.assume_role()
                 print(role)
+
+                codebuild_projects = session.codebuild_projects()
+                print(codebuild_projects)
 
                 # parse yaml file and start CodeBuild projects
                 for codebuild_project in read_yaml['codebuild_projects']:
@@ -215,6 +218,7 @@ if __name__ == "__main__":
     session_name = "funky_test"
     aws_region = 'us-east-1'
     external_id = 'smth'
+    duration_seconds = 3600
 
     # execute codebuild projects in yaml file
-    main(yaml_file, arn, session_name, aws_region, external_id)
+    main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds)
