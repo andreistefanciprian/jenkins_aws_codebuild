@@ -28,7 +28,7 @@ def main(yaml_file, arn, session_name, aws_region, external_id):
                 # client = aws_role_session.client('codebuild')
                 # codebuild_projects = get_codebuild_projects_from_aws(client)
 
-                session = AwsSession(arn, session_name, aws_region, external_id)
+                session = AwsSession(arn, session_name, aws_region, external_id, duration_seconds=3600)
                 role = session.assume_role()
                 print(role)
 
@@ -78,12 +78,12 @@ class AwsSession:
     Sending commands to AWS.
     """
 
-    def __init__(self, arn, session_name="jenkins", aws_region, external_id=pbdp, duration_seconds=3600):
+    def __init__(self, arn, session_name, aws_region, external_id, duration_seconds):
         self.arn = arn
-        self.session_name = session_name if session_name is not "jenkins"
+        self.session_name = session_name
         self.aws_region = aws_region
-        self.external_id = external_id if external_id is not "pbdp"
-        self.duration_seconds = duration_seconds if port is not 3600
+        self.external_id = external_id
+        self.duration_seconds = duration_seconds
         self.client = None
         self.session = None
         self.codebuild_projects = None
