@@ -5,6 +5,7 @@ from boto3.session import Session
 import json
 import time
 import sys
+import datetime
 
 def main(yaml_file, arn, session_name, aws_region, external_id):
     """
@@ -114,6 +115,7 @@ def verify_build_status(client, codebuild_project):
     while time_left > 0:
         
         time_left -= time_interval
+        now = datetime.datetime.now().strftime("%H:%M:%S")
 
         try:
             last_build_results = get_last_build_results(client, codebuild_project)
@@ -127,16 +129,16 @@ def verify_build_status(client, codebuild_project):
             status_msg = f"CodeBuild Project {codebuild_project} build {codebuild_build_number}: {codebuild_status}"
 
             if last_build_results['Build Status'] == 'IN_PROGRESS':
-                print(status_msg)
+                print(now, status_msg)
                 time.sleep(time_interval)
                 result = last_build_results['Build Status']
                 continue
             elif last_build_results['Build Status'] == 'SUCCEEDED':
-                print(status_msg)
+                print(now, status_msg)
                 result = last_build_results['Build Status']
                 break
             else:
-                print(status_msg)
+                print(now, status_msg)
                 result = last_build_results['Build Status']
                 break
 
