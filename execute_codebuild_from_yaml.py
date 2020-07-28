@@ -21,29 +21,32 @@ def main(yaml_file, arn, session_name, aws_region, external_id):
                 raise e
             else:
 
-                # assume AWS Role
+                # assume AWS Role and get list of CodeBuild projects
                 aws_role_session = assume_role(arn, session_name, aws_region, external_id)
-                client = aws_role_session.client('sts')
+                
+                # get current assumed role UserId (debug)
+                # client = aws_role_session.client('sts')
+                # account_id = client.get_caller_identity()["UserId"]
+                # print(f"\nCurrent Assumed AWS IAM User: {account_id}")
 
-                # get current assumed role UserId
-                account_id = client.get_caller_identity()["UserId"]
-                print(f"\nCurrent Assumed AWS IAM User: {account_id}")
-
-                print("\nConnecting to AWS to execute the CodeBuild projects...")
+                # print("\nConnecting to AWS to execute the CodeBuild projects...")
                 client = aws_role_session.client('codebuild')
              
                 # get list of CodeBuild projects from AWS
                 codebuild_projects = get_codebuild_projects_from_aws(client)
 
+                # iterate over CodeBuild projects from yaml file
                 for codebuild_project in read_yaml['codebuild_projects']:
                     if codebuild_project in codebuild_projects:
                         print(f"\nCodeBuild Project {codebuild_project} is available in AWS CodeBuild Project list.")
                         
-                        # start CodeBuild project build
-                        start_build(client, codebuild_project)
+                        # assume AWS Role and start CodeBuild project build
+                        session = assume_role(arn, session_name, aws_region, external_id)
+                        session_client = session.client('codebuild')
+                        start_build(session_client, codebuild_project)
 
                         # verify CodeBuild build status
-                        status = verify_build_status(client, codebuild_project)
+                        status = verify_build_status(session_client, codebuild_project)
                         if status != "SUCCEEDED":
                             msg = f"CodeBuild Project {codebuild_project} failed!"
                             print(msg)
