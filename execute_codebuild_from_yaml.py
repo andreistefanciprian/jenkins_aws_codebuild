@@ -31,7 +31,7 @@ def main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds
                 session = AwsSession(arn, session_name, aws_region, external_id, duration_seconds)
                 role = session.assume_role()
                 print(role)
-
+                # client = role.client('codebuild')
                 codebuild_projects = session.get_codebuild_projects_from_aws()
                 print(codebuild_projects)
 
@@ -117,6 +117,7 @@ class AwsSession:
         """
         
         try:
+            self.client = self.session.client('codebuild')
             self.codebuild_projects = self.client.list_projects()
         except Exception as e:
             log(str(e))
