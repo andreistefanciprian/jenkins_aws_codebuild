@@ -16,14 +16,14 @@ def main(yaml_file, arn, session_name, aws_region, external_id):
         with open(yaml_file, 'r') as file:
             try:
                 read_yaml = yaml.full_load(file)
-                print(f"Reading yaml file at: {yaml_file}")
+                log(f"Reading yaml file at: {yaml_file}")
             except Exception as e:
-                print(str(e))
+                log(str(e))
                 raise e
             else:
 
                 # assume AWS Role and get list of CodeBuild projects
-                print("\nAssume AWS Role and get list of CodeBuild projects...")
+                log("\nAssume AWS Role and get list of CodeBuild projects...")
                 aws_role_session = assume_role(arn, session_name, aws_region, external_id)
                 client = aws_role_session.client('codebuild')
                 codebuild_projects = get_codebuild_projects_from_aws(client)
@@ -31,11 +31,11 @@ def main(yaml_file, arn, session_name, aws_region, external_id):
                 # parse yaml file and start CodeBuild projects
                 for codebuild_project in read_yaml['codebuild_projects']:
                     if codebuild_project in codebuild_projects:
-                        print(f"\nCodeBuild Project {codebuild_project} is available in AWS CodeBuild Project list.")
+                        log(f"\nCodeBuild Project {codebuild_project} is available in AWS CodeBuild Project list.")
                         
                         # assume AWS Role and start CodeBuild project build
                         msg = f"\nAssume AWS Role and start CodeBuild project {codebuild_project} ..."
-                        print(msg)
+                        log(msg)
                         session = assume_role(arn, session_name, aws_region, external_id)
                         session_client = session.client('codebuild')
                         start_build(session_client, codebuild_project)
@@ -44,19 +44,27 @@ def main(yaml_file, arn, session_name, aws_region, external_id):
                         status = verify_build_status(session_client, codebuild_project)
                         if status != "SUCCEEDED":
                             msg = f"CodeBuild Project {codebuild_project} failed!"
-                            print(msg)
+                            log(msg)
                             sys.exit(1)
                         else:
                             msg = f"CodeBuild Project {codebuild_project}: {status}!"
-                            print(msg)
+                            log(msg)
                             continue
 
                     else:
-                        print(f"\n{codebuild_project} is not available in AWS CodeBuild Project list.")
+                        log(f"\n{codebuild_project} is not available in AWS CodeBuild Project list.")
 
     else:
         result = f"{yaml_file} file does not exist!"
-        print(result)
+        log(result)
+
+def log(message):
+    """
+    Print message to stdout with timestamp.
+    """
+
+    now = datetime.datetime.now().strftime("%H:%M:%S")
+    print(now, message)
 
 def assume_role(arn, session_name, region, external_id):
     """
@@ -66,7 +74,7 @@ def assume_role(arn, session_name, region, external_id):
     try:
         client = boto3.client('sts')
     except Exception as e:
-        print(str(e))
+        log(str(e))
         raise e
     else:
         response = client.assume_role(RoleArn=arn, RoleSessionName=session_name, DurationSeconds=3600, ExternalId=external_id)
@@ -85,7 +93,7 @@ def get_codebuild_projects_from_aws(client):
     try:
         codebuild_projects = client.list_projects()
     except Exception as e:
-        print(str(e))
+        log(str(e))
         raise e
     else:
         return codebuild_projects['projects']
@@ -97,11 +105,11 @@ def start_build(client, codebuild_project):
     try:
         client.start_build(projectName=codebuild_project)
     except Exception as e:
-        print(str(e))
+        log(str(e))
         raise e
     else:
         last_build_results = get_last_build_results(client, codebuild_project)
-        print(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...")
+        log(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...")
 
 def verify_build_status(client, codebuild_project):
     """
@@ -115,12 +123,11 @@ def verify_build_status(client, codebuild_project):
     while time_left > 0:
         
         time_left -= time_interval
-        now = datetime.datetime.now().strftime("%H:%M:%S")
 
         try:
             last_build_results = get_last_build_results(client, codebuild_project)
         except Exception as e:
-            print(str(e))
+            log(str(e))
             raise e
         else:
             codebuild_project = last_build_results['Build Project Name']
@@ -129,16 +136,16 @@ def verify_build_status(client, codebuild_project):
             status_msg = f"CodeBuild Project {codebuild_project} build {codebuild_build_number}: {codebuild_status}"
 
             if last_build_results['Build Status'] == 'IN_PROGRESS':
-                print(now, status_msg)
+                log(status_msg)
                 time.sleep(time_interval)
                 result = last_build_results['Build Status']
                 continue
             elif last_build_results['Build Status'] == 'SUCCEEDED':
-                print(now, status_msg)
+                log(status_msg)
                 result = last_build_results['Build Status']
                 break
             else:
-                print(now, status_msg)
+                log(status_msg)
                 result = last_build_results['Build Status']
                 break
 
@@ -156,7 +163,7 @@ def get_last_build_results(client, codebuild_project):
     try:
         project_builds = client.list_builds_for_project(projectName=codebuild_project)
     except Exception as e:
-        print(str(e))
+        log(str(e))
         raise e
     else: 
         build_id = project_builds['ids'][0]
