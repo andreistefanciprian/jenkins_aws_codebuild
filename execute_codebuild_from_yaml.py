@@ -71,7 +71,7 @@ def assume_role(arn, session_name, region, external_id):
         print(str(e))
         raise e
     else:
-        response = client.assume_role(RoleArn=arn, RoleSessionName=session_name, ExternalId=external_id)
+        response = client.assume_role(RoleArn=arn, RoleSessionName=session_name, DurationSeconds=3600, ExternalId=external_id)
         session = Session(aws_access_key_id=response['Credentials']['AccessKeyId'],
                     aws_secret_access_key=response['Credentials']['SecretAccessKey'],
                     aws_session_token=response['Credentials']['SessionToken'],
