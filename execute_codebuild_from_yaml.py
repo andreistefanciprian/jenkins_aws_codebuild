@@ -30,10 +30,10 @@ def main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds
 
                 session = AwsSession(arn, session_name, aws_region, external_id, duration_seconds)
                 role = session.assume_role()
-                print(role)
+                # print(role)
                 # client = role.client('codebuild')
                 codebuild_projects = session.get_codebuild_projects_from_aws()
-                print(codebuild_projects)
+                # print(codebuild_projects)
 
                 # parse yaml file and start CodeBuild projects
                 for codebuild_project in read_yaml['codebuild_projects']:
@@ -49,14 +49,19 @@ def main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds
                         # session_client = session.client('codebuild')
                         # start_build(session_client, codebuild_project)
 
+                        session = AwsSession(arn, session_name, aws_region, external_id, duration_seconds)
+                        role = session.assume_role()
+                        session.start_build(codebuild_project)
+
                         # # verify CodeBuild build status
                         # status = verify_build_status(session_client, codebuild_project)
-                        # if status != "SUCCEEDED": 
-                        #     log(f"CodeBuild Project {codebuild_project} failed!")
-                        #     sys.exit(1)
-                        # else:
-                        #     log(f"CodeBuild Project {codebuild_project}: {status}!")
-                        #     continue
+                        status = session.verify_build_status(codebuild_project)
+                        if status != "SUCCEEDED": 
+                            log(f"CodeBuild Project {codebuild_project} failed!")
+                            sys.exit(1)
+                        else:
+                            log(f"CodeBuild Project {codebuild_project}: {status}!")
+                            continue
 
                     else:
                         log(f"\n{codebuild_project} is not available in AWS CodeBuild Project list.")
