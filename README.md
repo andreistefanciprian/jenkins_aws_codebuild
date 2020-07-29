@@ -39,10 +39,11 @@ Take these names and populate the related fields in the backend section of the t
 Go through Jenkins installation steps at: http://localhost:8090. 
 
 Define these secrets in Jenkins:
- - aws_access_key secret text for AWS_ACCESS_KEY_ID
- - aws_secret_key secret text for AWS_SECRET_ACCESS_KEY
+ - aws_access_key: AWS_ACCESS_KEY_ID (secret text)
+ - aws_secret_key: AWS_SECRET_ACCESS_KEY (secret text)
+ - aws_region: AWS region (secret text)
+ - aws_account: AWS account number (secret text)
  - Git token defined both as secret text and username and password type of secrets (used for git hook and git clone private repo)
- - aws_region secret text for AWS region us-east-1
 
 AWS credentials inside Codebuild projects:
 - .env file with AWS secrets (AWS_ACCESS_KEY_ID=acces-key and AWS_SECRET_ACCESS_KEY=secret-key) should be made available in s3 bucket (check buildspec.yaml file)
