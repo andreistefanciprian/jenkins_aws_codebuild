@@ -7,7 +7,8 @@ import time
 import sys
 import datetime
 
-def main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds):
+# def main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds):
+def main(yaml_file, **kwargs):
     """
     Execute AWS codebuild projects provided in yaml file.
     """
@@ -23,61 +24,44 @@ def main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds
             else:
 
                 # assume AWS Role and get list of CodeBuild projects
-                log("Assume AWS Role and get list of CodeBuild projects ...")
-                # aws_role_session = assume_role(arn, session_name, aws_region, external_id)
-                # client = aws_role_session.client('codebuild')
-                # codebuild_projects = get_codebuild_projects_from_aws(client)
-
-                session = AwsSession(arn, session_name, aws_region, external_id, duration_seconds)
-                session.assume_role()
-                # print(role)
-                # client = role.client('codebuild')
-                codebuild_projects = session.get_codebuild_projects_from_aws()
-                # print(codebuild_projects)
+                session = AwsSession(**kwargs)
+                codebuild_projects = session.get_codebuild_projects()
 
                 # parse yaml file and start CodeBuild projects
                 for codebuild_project in read_yaml['codebuild_projects']:
 
                     # verify if codebuild project in yaml file available in AWS
                     if codebuild_project in codebuild_projects:
-
-                        print(codebuild_project)
-                        
-                        # # assume AWS Role and start CodeBuild project build
-                        # log(f"Assume AWS Role and start CodeBuild project {codebuild_project} ...")
-                        # session = assume_role(arn, session_name, aws_region, external_id)
-                        # session_client = session.client('codebuild')
-                        # start_build(session_client, codebuild_project)
-
-                        session = AwsSession(arn, session_name, aws_region, external_id, duration_seconds)
-                        session.assume_role()
-                        session.start_build(codebuild_project)
-
-                        # # verify CodeBuild build status
-                        # status = verify_build_status(session_client, codebuild_project)
-                        
-                        # status = session.verify_build_status(codebuild_project)
-                        # if status != "SUCCEEDED": 
-                        #     log(f"CodeBuild Project {codebuild_project} failed!")
-                        #     sys.exit(1)
+                
+                        # assume AWS Role and start CodeBuild project build
+                        session = AwsSession(**kwargs)
+                        session.start_codebuild_build(codebuild_project)
+              
+                        # verify CodeBuild build status
+                        status = session.get_codebuild_status(codebuild_project)
+                        if status != "SUCCEEDED":
+                            sys.exit(f"CodeBuild Project {codebuild_project} failed!")
                         # else:
                         #     log(f"CodeBuild Project {codebuild_project}: {status}!")
                         #     continue
 
                     else:
-                        log(f"\n{codebuild_project} is not available in AWS CodeBuild Project list.")
+                        log(f"{codebuild_project} is not available in AWS CodeBuild Project list.", new_line=True)
 
     else:
         result = f"{yaml_file} file does not exist!"
         log(result)
 
-def log(message):
+def log(message, new_line=False):
     """
     Print message to stdout with timestamp.
     """
 
     now = datetime.datetime.now().strftime("%H:%M:%S")
-    print(now, message)
+    if new_line:
+        print('\n' + now, message)
+    else:
+        print(now, message)
 
 class AwsSession:
 
@@ -87,18 +71,19 @@ class AwsSession:
     Sending commands to AWS.
     """
 
-    def __init__(self, arn, session_name, aws_region, external_id, duration_seconds):
+    def __init__(self, arn, aws_region, duration_seconds=None, external_id=None, session_name=None):
         self.arn = arn
-        self.session_name = session_name
+        self.session_name = 'jenkins_session' if session_name is None else session_name
         self.aws_region = aws_region
-        self.external_id = external_id
-        self.duration_seconds = duration_seconds
+        self.external_id = 'jenkins_id' if external_id is None else external_id
+        self.duration_seconds = 3600 if duration_seconds is None else duration_seconds
         self.client = None
-        self.session = None
+        self.session = self._assume_role()
         self.codebuild_projects = None
-        self._is_connected = False
+        self._codebuild_is_connected = False
+        self.sts_caller_identity = self._get_sts_caller_identity()
 
-    def assume_role(self):
+    def _assume_role(self):
         """
         Assume AWS IAM Role.
         """
@@ -111,54 +96,75 @@ class AwsSession:
         else:
             response = self.client.assume_role(RoleArn=self.arn, RoleSessionName=self.session_name, DurationSeconds=self.duration_seconds, ExternalId=self.external_id)
 
-            self.session = Session(aws_access_key_id=response['Credentials']['AccessKeyId'],
+            session = Session(aws_access_key_id=response['Credentials']['AccessKeyId'],
                         aws_secret_access_key=response['Credentials']['SecretAccessKey'],
                         aws_session_token=response['Credentials']['SessionToken'],
                         region_name=self.aws_region)
-            return self.session
+            return session
 
-    def _client(self, service):
+    def _get_sts_caller_identity(self):
+        """
+        Returns details about the IAM user or role whose credentials are used to call the operation.
+        return: dict
+        """
+
+        try:
+            client = self.session.client('sts')
+        except Exception as e:
+            log(str(e))
+            raise
+        else:
+            caller_identity = client.get_caller_identity()
+            log('Assumed STS Identity:', new_line=True)
+            for k,v in caller_identity.items():
+                    print(k,v)
+            return caller_identity
+
+    def _codebuild_client(self):
         """
         Create a low-level service client by name.
         return: True or False
         """
 
-        if not self._is_connected:
+        if not self._codebuild_is_connected:
             try:
-                self.client = self.session.client(service)
+                self.client = self.session.client('codebuild')
             except Exception as e:
                 log(str(e))
                 raise
             else:
-                self._is_connected = True
-                return self._is_connected
+                self._codebuild_is_connected = True
+                return self._codebuild_is_connected
+        else:
+            return self._codebuild_is_connected
 
-    def get_codebuild_projects_from_aws(self):
+    def get_codebuild_projects(self):
         """
         Get list of CodeBuild projects from AWS.
-        Returns a list of projects.
+        return: list of projects
         """
 
-        if self._client('codebuild'):
+        if self._codebuild_client():
             try:
-                # self.client = self.session.client('codebuild')
                 self.codebuild_projects = self.client.list_projects()
             except Exception as e:
                 log(str(e))
                 raise
             else:
+                log('CodeBuild projects currently available in AWS:', new_line=True)
+                for project in self.codebuild_projects['projects']:
+                    print(project)
                 return self.codebuild_projects['projects']
         else:
-            raise "Cannot establish CodeBuild connection ...!"
+            raise Exception("Cannot establish CodeBuild connection ...!")
 
-    def get_last_build_results(self, codebuild_project):
+    def get_codebuild_build_result(self, codebuild_project):
         """
         Get CodeBuild result of last build.
-
-        Return dictionary.
+        return: dictionary
         """
 
-        if self._client('codebuild'):
+        if self._codebuild_client():
             result = {}
 
             try:
@@ -173,30 +179,35 @@ class AwsSession:
                 result['Build Start Time'] = build_data['builds'][0]['startTime']
                 result['Build Status'] = build_data['builds'][0]['buildStatus']
                 result['Build Project Name'] = build_data['builds'][0]['projectName']
-                return result
+            return result
+        else:
+            raise Exception("Cannot establish CodeBuild connection ...")
 
-    def start_build(self, codebuild_project):
+    def start_codebuild_build(self, codebuild_project):
         """
         Start CodeBuild project build.
         """
 
-        if self._client('codebuild'):
+        if self._codebuild_client():
             try:
                 self.client.start_build(projectName=codebuild_project)
             except Exception as e:
                 log(str(e))
                 raise
             else:
-                last_build_results = self.get_last_build_results(codebuild_project)
-                log(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...")
+                last_build_results = self.get_codebuild_build_result(codebuild_project)
+                log(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...", new_line=True)
+        else:
+            raise Exception("Cannot establish CodeBuild connection ...!")
 
-    def verify_build_status(self, codebuild_project):
+    def get_codebuild_status(self, codebuild_project):
         """
         This function verifies the status of the last CodeBuild build until it is successfull.
+        return: string (IN_PROGRESS, SUCCEEDED, FAILED, etc)
         """
 
-        time_interval = 5   # verify status every n seconds
-        time_left = 300     # max time a build can take in seconds
+        time_interval = 15   # verify status every n seconds
+        time_left = 3600     # max time a build can take in seconds
         result = "FAIL"
 
         while time_left > 0:
@@ -204,7 +215,7 @@ class AwsSession:
             time_left -= time_interval
 
             try:
-                last_build_results = self.get_last_build_results(codebuild_project)
+                last_build_results = self.get_codebuild_build_result(codebuild_project)
             except Exception as e:
                 log(str(e))
                 raise
@@ -252,4 +263,5 @@ if __name__ == "__main__":
     duration_seconds = 3600
 
     # execute codebuild projects in yaml file
-    main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds)
+    # main(yaml_file, arn=arn, session_name=session_name, aws_region=aws_region, external_id=external_id, duration_seconds=duration_seconds)
+    main(yaml_file, arn=arn, aws_region=aws_region, session_name=session_name)
