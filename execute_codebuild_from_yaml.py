@@ -7,50 +7,32 @@ import time
 import sys
 import datetime
 
-# def main(yaml_file, arn, session_name, aws_region, external_id, duration_seconds):
-def main(yaml_file, **kwargs):
+def main(codebuild_projects_from_yaml, **kwargs):
     """
     Execute AWS codebuild projects provided in yaml file.
     """
 
-    if os.path.exists(yaml_file):
-        with open(yaml_file, 'r') as file:
-            try:
-                read_yaml = yaml.full_load(file)
-                log(f"Reading {yaml_file} file ...")
-            except Exception as e:
-                log(str(e))
-                raise
-            else:
+    # assume AWS Role and get list of configured AWS CodeBuild projects
+    session = AwsSession(**kwargs)
+    codebuild_projects_in_aws = session.get_codebuild_projects()
 
-                # assume AWS Role and get list of CodeBuild projects
-                session = AwsSession(**kwargs)
-                codebuild_projects = session.get_codebuild_projects()
+    # parse yaml file and start CodeBuild projects
+    for codebuild_project in codebuild_projects_from_yaml:
 
-                # parse yaml file and start CodeBuild projects
-                for codebuild_project in read_yaml['codebuild_projects']:
+        # verify if codebuild project in yaml file available in AWS
+        if codebuild_project in codebuild_projects_in_aws:
+    
+            # assume AWS Role and start CodeBuild project build
+            session = AwsSession(**kwargs)
+            session.start_codebuild_build(codebuild_project)
+    
+            # verify CodeBuild build status
+            status = session.get_codebuild_status(codebuild_project)
+            if status != "SUCCEEDED":
+                sys.exit(f"CodeBuild Project {codebuild_project} failed!")
 
-                    # verify if codebuild project in yaml file available in AWS
-                    if codebuild_project in codebuild_projects:
-                
-                        # assume AWS Role and start CodeBuild project build
-                        session = AwsSession(**kwargs)
-                        session.start_codebuild_build(codebuild_project)
-              
-                        # verify CodeBuild build status
-                        status = session.get_codebuild_status(codebuild_project)
-                        if status != "SUCCEEDED":
-                            sys.exit(f"CodeBuild Project {codebuild_project} failed!")
-                        # else:
-                        #     log(f"CodeBuild Project {codebuild_project}: {status}!")
-                        #     continue
-
-                    else:
-                        log(f"{codebuild_project} is not available in AWS CodeBuild Project list.", new_line=True)
-
-    else:
-        result = f"{yaml_file} file does not exist!"
-        log(result)
+        else:
+            log(f"{codebuild_project} is not available in AWS CodeBuild Project list.", new_line=True)
 
 def log(message, new_line=False):
     """
@@ -63,6 +45,32 @@ def log(message, new_line=False):
     else:
         print(now, message)
 
+def parse_yaml(yaml_file, yaml_list_elem):
+    """
+    Parse yaml file and return a list of CodeBuild projects to execute in AWS.
+    return: list
+    """
+
+    cb_projects_to_run = []
+
+    if os.path.exists(yaml_file):
+        log(f"Reading {yaml_file} file ...", new_line=True)
+        with open(yaml_file, 'r') as file:
+            try:
+                read_yaml = yaml.full_load(file)
+            except Exception as e:
+                log(str(e))
+                raise
+            else:
+                cb_projects_to_run = read_yaml[yaml_list_elem]
+                log(f"CodeBuild projects to run are:")
+                for cb_project in cb_projects_to_run:
+                    print(cb_project)
+                return cb_projects_to_run
+    else:
+        raise(f"{yaml_file} file does not exist!")
+    
+            
 class AwsSession:
 
     """
@@ -242,16 +250,6 @@ class AwsSession:
         return result
 
 
-# def dict2json(data: dict):
-#     """
-#     Parse CodeBuild build result from dict to nice JSON output.
-#     """
-
-#     build_data_json = json.dumps(data, indent=4, sort_keys=True, default=str)
-#     parsed = json.loads(str(build_data_json))
-#     return json.dumps(parsed, indent=4, sort_keys=True)
-
-
 if __name__ == "__main__":
 
     # define vars
@@ -261,7 +259,9 @@ if __name__ == "__main__":
     aws_region = 'us-east-1'
     external_id = 'smth'
     duration_seconds = 3600
-
-    # execute codebuild projects in yaml file
-    # main(yaml_file, arn=arn, session_name=session_name, aws_region=aws_region, external_id=external_id, duration_seconds=duration_seconds)
-    main(yaml_file, arn=arn, aws_region=aws_region, session_name=session_name)
+    
+    # parse yaml file and execute codebuild projects
+    codebuild_projects_from_yaml = parse_yaml(yaml_file, 'codebuild_projects')
+    # main(codebuild_projects_from_yaml, arn=arn, session_name=session_name, aws_region=aws_region, external_id=external_id, duration_seconds=duration_seconds)
+    main(codebuild_projects_from_yaml, arn=arn, aws_region=aws_region, session_name=session_name)
+    
