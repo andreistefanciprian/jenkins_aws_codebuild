@@ -7,7 +7,7 @@ import time
 import sys
 import datetime
 
-def main(codebuild_projects_from_yaml, **kwargs):
+def main(codebuild_list, **kwargs):
     """
     Execute AWS codebuild projects.
     """
@@ -17,7 +17,7 @@ def main(codebuild_projects_from_yaml, **kwargs):
     codebuild_projects_in_aws = session.get_codebuild_projects()
 
     # parse yaml file and start CodeBuild projects
-    for codebuild_project in codebuild_projects_from_yaml:
+    for codebuild_project in codebuild_list:
 
         # verify if codebuild project in yaml file available in AWS
         if codebuild_project in codebuild_projects_in_aws:
@@ -79,8 +79,10 @@ class AwsSession:
     Sending commands to AWS.
     """
 
-    def __init__(self, arn, aws_region, duration_seconds=None, external_id=None, session_name=None):
-        self.arn = arn
+    def __init__(self, aws_account, aws_iam_role, aws_region, duration_seconds=None, external_id=None, session_name=None):
+        self.aws_account = aws_account
+        self.aws_iam_role = aws_iam_role
+        self.arn = f'arn:aws:iam::{aws_account}:role/{aws_iam_role}'
         self.session_name = 'jenkins_session' if session_name is None else session_name
         self.aws_region = aws_region
         self.external_id = 'jenkins_id' if external_id is None else external_id
@@ -253,15 +255,16 @@ class AwsSession:
 if __name__ == "__main__":
 
     # define vars
-    arn = sys.argv[1] if len(sys.argv) == 2 else sys.exit("AWS ARN Role has to be provided as positional parameter!")
+    aws_account = sys.argv[1] if len(sys.argv) == 2 else sys.exit('AWS ARN Role has to be provided as positional parameter!')
+    aws_iam_role = 'test-role'
     yaml_file = os.path.join(os.getcwd(), 'codebuild_projects.yaml')
-    session_name = "funky_test"
+    session_name = 'funky_test'
     aws_region = 'us-east-1'
     external_id = 'smth'
     duration_seconds = 3600
     
     # parse yaml file and execute codebuild projects
     codebuild_projects_from_yaml = parse_yaml(yaml_file, 'codebuild_projects')
-    # main(codebuild_projects_from_yaml, arn=arn, session_name=session_name, aws_region=aws_region, external_id=external_id, duration_seconds=duration_seconds)
-    main(codebuild_projects_from_yaml, arn=arn, aws_region=aws_region, session_name=session_name)
+    # main(codebuild_projects_from_yaml, aws_account=aws_account, aws_iam_role=aws_iam_role, session_name=session_name, aws_region=aws_region, external_id=external_id, duration_seconds=duration_seconds)
+    main(codebuild_projects_from_yaml, aws_account=aws_account, aws_iam_role=aws_iam_role, aws_region=aws_region, session_name=session_name)
     
