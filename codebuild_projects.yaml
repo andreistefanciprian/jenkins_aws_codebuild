@@ -2,10 +2,10 @@
 codebuild_projects:
 - deploy_static
 - this_one_doesnt_exist
-- failing_job
-- newproj-test
-- destroy_infra
-- destroy_static
+# - failing_job
+# - newproj-test
+# - destroy_infra
+# - destroy_static
 codebuild_all_projects:
 - deploy_static
 - this_one_doesnt_exist
