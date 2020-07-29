@@ -9,7 +9,7 @@ import datetime
 
 def main(codebuild_projects_from_yaml, **kwargs):
     """
-    Execute AWS codebuild projects provided in yaml file.
+    Execute AWS codebuild projects.
     """
 
     # assume AWS Role and get list of configured AWS CodeBuild projects
@@ -32,7 +32,7 @@ def main(codebuild_projects_from_yaml, **kwargs):
                 sys.exit(f"CodeBuild Project {codebuild_project} failed!")
 
         else:
-            log(f"{codebuild_project} is not available in AWS CodeBuild Project list.", new_line=True)
+            log(f'{codebuild_project} is not available in AWS CodeBuild Project list.', new_line=True)
 
 def log(message, new_line=False):
     """
@@ -54,7 +54,7 @@ def parse_yaml(yaml_file, yaml_list_elem):
     cb_projects_to_run = []
 
     if os.path.exists(yaml_file):
-        log(f"Reading {yaml_file} file ...", new_line=True)
+        log(f'Reading {yaml_file} file ...', new_line=True)
         with open(yaml_file, 'r') as file:
             try:
                 read_yaml = yaml.full_load(file)
@@ -63,7 +63,7 @@ def parse_yaml(yaml_file, yaml_list_elem):
                 raise
             else:
                 cb_projects_to_run = read_yaml[yaml_list_elem]
-                log(f"CodeBuild projects to run are:")
+                log(f'CodeBuild projects to run are:')
                 for cb_project in cb_projects_to_run:
                     print(cb_project)
                 return cb_projects_to_run
@@ -123,7 +123,7 @@ class AwsSession:
             raise
         else:
             caller_identity = client.get_caller_identity()
-            log('Assumed STS Identity:', new_line=True)
+            log("STS Identity assumed!", new_line=True)
             for k,v in caller_identity.items():
                     print(k,v)
             return caller_identity
