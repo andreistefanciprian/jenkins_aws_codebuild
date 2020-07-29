@@ -108,7 +108,8 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # execute script
-python3 execute_codebuild_from_yaml.py
+aws_account=9238748923565 
+python execute_codebuild_from_yaml.py $aws_account
 ```
 
 Use these commands to verify you can build resources with terraform from CLI:
