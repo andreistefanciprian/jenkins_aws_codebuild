@@ -4,9 +4,9 @@ This is a Jenkins pipeline that builds CodeBuild projects in AWS cloud, then run
 The CodeBuild projects are building infrastructure within AWS cloud.
 
 The pipeline is doing the following:
-- building AWS resources (Codebuild projects) with terraform
-- parsing yaml file with codebuild projects to be executed (python script)
-- start each of the codebuild projects extracted from yaml file, one by one (python script)
+- build AWS resources with terraform (Codebuild projects)
+- parses yaml file with codebuild projects to be executed (python script)
+- starts each of the codebuild projects extracted from yaml file, one by one (python script)
 
 ## Prerequisites
 
