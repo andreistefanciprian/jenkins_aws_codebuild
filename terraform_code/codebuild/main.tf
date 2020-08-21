@@ -6,10 +6,10 @@ provider "aws" {
 # terraform backend
 terraform {
   backend "s3" {
-    bucket         = "s3-tfstate-95653"
+    bucket         = "s3-tfstate-83086"
     key            = "codebuild/codebuild.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "dynamodb-tfstate-lock-95653"
+    dynamodb_table = "dynamodb-tfstate-lock-83086"
   }
 }
 
