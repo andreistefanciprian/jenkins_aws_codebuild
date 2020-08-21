@@ -31,19 +31,21 @@ pipeline {
 
       stage('Execute CodeBuild projects in AWS') {
          steps {
+            sh 'aws sts get-caller-identity'
+
             echo 'Parse yaml and execute CodeBuild Projects...'
             sh 'python3 -u execute_codebuild_from_yaml.py $AWS_ACCOUNT'
          }
       }
 
-      stage('Destroy CodeBuild projects with Terraform') {
-         steps {
-               echo 'Destroying AWS CodeBuild Projects...'
-               dir('terraform_code/'){
-                  sh "make destroy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
-               }                
-         }
-      }
+      // stage('Destroy CodeBuild projects with Terraform') {
+      //    steps {
+      //          echo 'Destroying AWS CodeBuild Projects...'
+      //          dir('terraform_code/'){
+      //             sh "make destroy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
+      //          }                
+      //    }
+      // }
 
    }
 }
