@@ -9,7 +9,7 @@ variable "static_remote_state_bucket" {
 
 variable "cloud_assume_role" {
   type = bool
-  default = true
+  default = false
 }
 
 variable "arn_role" {
