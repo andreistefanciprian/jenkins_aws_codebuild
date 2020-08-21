@@ -32,7 +32,6 @@ variable "cloud_assume_role" {
 
 variable "arn_role" {
   type = string
-  default = "arn:aws:iam::396667666940:role/test-role"
 }
 
 variable "extenal_id" {
