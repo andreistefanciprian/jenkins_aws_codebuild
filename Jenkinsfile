@@ -9,6 +9,7 @@ pipeline {
       AWS_SECRET_ACCESS_KEY = credentials('aws_secret_key')
       TF_IN_AUTOMATION = "true"
       AWS_ACCOUNT = credentials('aws_account')
+      TF_LOG = "TRACE"
    }
 
    stages {
