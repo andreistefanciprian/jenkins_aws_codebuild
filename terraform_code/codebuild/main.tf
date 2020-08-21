@@ -1,6 +1,7 @@
 # terraform cloud provider
 provider "aws" {
   region = var.region
+  version = "= 2.44"
 
   assume_role {
     role_arn    = var.cloud_assume_role ? var.arn_role : null
