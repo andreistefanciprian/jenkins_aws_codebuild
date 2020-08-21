@@ -4,5 +4,5 @@ variable "region" {
 }
 
 variable "static_remote_state_bucket" {
-  default = "s3-tfstate-95653"
+  default = "s3-tfstate-83086"
 }
