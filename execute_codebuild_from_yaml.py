@@ -267,6 +267,6 @@ if __name__ == "__main__":
     codebuild_projects_from_yaml = parse_yaml(yaml_file, 'codebuild_projects')
 
     # execute codebuild projects
-    # main(codebuild_projects_from_yaml, aws_account=aws_account, aws_iam_role=aws_iam_role, session_name=session_name, aws_region=aws_region, external_id=external_id, duration_seconds=duration_seconds)
-    main(codebuild_projects_from_yaml, aws_account=aws_account, aws_iam_role=aws_iam_role, aws_region=aws_region, session_name=session_name)
+    main(codebuild_projects_from_yaml, aws_account=aws_account, aws_iam_role=aws_iam_role, session_name=session_name, aws_region=aws_region, external_id=external_id, duration_seconds=duration_seconds)
+    # main(codebuild_projects_from_yaml, aws_account=aws_account, aws_iam_role=aws_iam_role, aws_region=aws_region, session_name=session_name)
     
