@@ -25,26 +25,26 @@ variable "public_subnets" {
   default = ["10.0.31.0/24", "10.0.33.0/24"]
 }
 
-variable "cloud_assume_role" {
-  type = bool
-  default = false
-}
+# variable "cloud_assume_role" {
+#   type = bool
+#   default = false
+# }
 
-variable "arn_role" {
-  type = string
-}
+# variable "arn_role" {
+#   type = string
+# }
 
-variable "extenal_id" {
-  type = string
-  default = "smth"
-}
+# variable "extenal_id" {
+#   type = string
+#   default = "smth"
+# }
 
-variable "session_name" {
-  type = string
-  default = "Jenkins"
-}
-variable "session_duration" {
-  type = number
-  default = 3600
-}
+# variable "session_name" {
+#   type = string
+#   default = "Jenkins"
+# }
+# variable "session_duration" {
+#   type = number
+#   default = 3600
+# }
 

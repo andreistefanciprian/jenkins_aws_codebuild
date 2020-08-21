@@ -8,12 +8,7 @@ provider "aws" {
   #   session_name = var.cloud_assume_role ? var.session_name : null
   #   duration_seconds = var.cloud_assume_role ? var.session_duration : null
   # }
-  assume_role {
-    role_arn    = var.cloud_assume_role ? var.arn_role : null
-    external_id = var.extenal_id
-    session_name = var.session_name
-    duration_seconds = var.session_duration
-  }
+
 }
 
 # terraform backend

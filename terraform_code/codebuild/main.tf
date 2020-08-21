@@ -1,14 +1,14 @@
 # terraform cloud provider
 provider "aws" {
   region = var.region
-  version = "= 2.44"
+  # version = "= 2.44"
 
-  assume_role {
-    role_arn    = var.cloud_assume_role ? var.arn_role : null
-    external_id = var.cloud_assume_role ? var.extenal_id : null
-    session_name = var.cloud_assume_role ? var.session_name : null
-    duration_seconds = var.cloud_assume_role ? var.session_duration : null
-  }
+  # assume_role {
+  #   role_arn    = var.cloud_assume_role ? var.arn_role : null
+  #   external_id = var.cloud_assume_role ? var.extenal_id : null
+  #   session_name = var.cloud_assume_role ? var.session_name : null
+  #   duration_seconds = var.cloud_assume_role ? var.session_duration : null
+  # }
 
 }
 
@@ -18,7 +18,7 @@ terraform {
     bucket         = "s3-tfstate-83086"
     key            = "codebuild/codebuild.tfstate"
     region         = "us-east-1"
-    dynamodb_table = "dynamodb-tfstate-lock-83087"
+    dynamodb_table = "dynamodb-tfstate-lock-83086"
   }
 }
 
