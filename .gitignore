@@ -21,3 +21,5 @@
 .env
 
 codebuild_projects.txt
+
+.DS_Store
