@@ -26,7 +26,7 @@ variable "public_subnets" {
 }
 
 variable "cloud_assume_role" {
-  type = boolean
+  type = bool
   default = true
 }
 
