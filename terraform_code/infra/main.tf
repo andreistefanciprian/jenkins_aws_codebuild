@@ -3,6 +3,12 @@
 # aws cloud provider
 provider "aws" {
   region = var.region
+  assume_role {
+    role_arn    = "arn:aws:iam::396667666940:role/test-role"
+    external_id = "smth"
+    session_name = "jenkins"
+    duration_seconds = 3600
+  }  
 }
 
 # terraform backend
