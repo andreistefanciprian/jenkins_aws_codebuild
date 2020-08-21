@@ -3,12 +3,12 @@ provider "aws" {
   region = var.region
 
   assume_role {
-    role_arn    = "arn:aws:iam::396667666940:role/test-role"
-    external_id = "smth"
-    session_name = "jenkins"
-    duration_seconds = 3600
+    role_arn    = var.cloud_assume_role ? var.arn_role : null
+    external_id = var.cloud_assume_role ? var.extenal_id : null
+    session_name = var.cloud_assume_role ? var.session_name : null
+    duration_seconds = var.cloud_assume_role ? var.session_duration : null
   }
-  
+
 }
 
 # terraform backend
