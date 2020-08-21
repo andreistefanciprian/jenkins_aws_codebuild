@@ -1,6 +1,14 @@
 # terraform cloud provider
 provider "aws" {
   region = var.region
+
+  assume_role {
+    role_arn    = var.cloud_assume_role ? var.arn_role : null
+    external_id = var.extenal_id
+    session_name = var.session_name
+    duration_seconds = var.session_duration
+  }
+
 }
 
 # terraform backend
