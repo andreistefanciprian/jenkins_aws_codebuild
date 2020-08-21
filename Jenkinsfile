@@ -13,21 +13,21 @@ pipeline {
 
    stages {
 
-      stage('CLEAN WORKING DIR & GIT CHECKOUT') {
-         steps {
-               cleanWs()  
-               checkout scm
-         }
-      }
+      // stage('CLEAN WORKING DIR & GIT CHECKOUT') {
+      //    steps {
+      //          cleanWs()  
+      //          checkout scm
+      //    }
+      // }
 
-      stage('Build CodeBuild projects with Terraform') {
-         steps {
-               echo 'Building AWS CodeBuild Projects...'
-               dir('terraform_code/'){
-                  sh "make deploy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
-               }                
-         }
-      }
+      // stage('Build CodeBuild projects with Terraform') {
+      //    steps {
+      //          echo 'Building AWS CodeBuild Projects...'
+      //          dir('terraform_code/'){
+      //             sh "make deploy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
+      //          }                
+      //    }
+      // }
 
       stage('Execute CodeBuild projects in AWS') {
          steps {
