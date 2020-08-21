@@ -31,7 +31,10 @@ pipeline {
 
       stage('Execute CodeBuild projects in AWS') {
          steps {
-            sh 'aws sts get-caller-identity'
+            sh '''
+            aws sts get-caller-identity
+            aws sts assume-role --role-arn "arn:aws:iam::${AWS_ACCOUNT}:role/test-role" --role-session-name jenkins --duration-seconds 3600 --external-id smth
+            '''
 
             echo 'Parse yaml and execute CodeBuild Projects...'
             sh 'python3 -u execute_codebuild_from_yaml.py $AWS_ACCOUNT'
