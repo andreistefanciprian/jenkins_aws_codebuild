@@ -9,7 +9,7 @@ pipeline {
       AWS_SECRET_ACCESS_KEY = credentials('aws_secret_key')
       TF_IN_AUTOMATION = "true"
       AWS_ACCOUNT = credentials('aws_account')
-      TF_LOG = "TRACE"
+      // TF_LOG = "TRACE"
    }
 
    stages {
@@ -21,14 +21,14 @@ pipeline {
          }
       }
 
-      // stage('Build CodeBuild projects with Terraform') {
-      //    steps {
-      //          echo 'Building AWS CodeBuild Projects...'
-      //          dir('terraform_code/'){
-      //             sh "make deploy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
-      //          }                
-      //    }
-      // }
+      stage('Build CodeBuild projects with Terraform') {
+         steps {
+               echo 'Building AWS CodeBuild Projects...'
+               dir('terraform_code/'){
+                  sh "make deploy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
+               }                
+         }
+      }
 
       stage('Execute CodeBuild projects in AWS') {
          steps {
@@ -37,14 +37,14 @@ pipeline {
          }
       }
 
-      // stage('Destroy CodeBuild projects with Terraform') {
-      //    steps {
-      //          echo 'Destroying AWS CodeBuild Projects...'
-      //          dir('terraform_code/'){
-      //             sh "make destroy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
-      //          }                
-      //    }
-      // }
+      stage('Destroy CodeBuild projects with Terraform') {
+         steps {
+               echo 'Destroying AWS CodeBuild Projects...'
+               dir('terraform_code/'){
+                  sh "make destroy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
+               }                
+         }
+      }
 
    }
 }
