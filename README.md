@@ -16,37 +16,47 @@ Spin off a Jenkins docker container with a named volume to preserve jenkins conf
 ```docker-compose -f jenkins/docker-compose.yaml up --detach```
 
 AWS account at https://console.aws.amazon.com/.
-
-AWS service account to be used by Terraform and Jenkins.
-
+AWS access key and secret to be used by Terraform and Jenkins.
+AWS Role to be assumed by Terraform and Jenkins.
 AWS s3 bucket (terraform backend) and dynamodb table for terraform state lock management.
+
 Create these resources following these steps:
 ```
 cd prerequisites
 terraform init --var-file="../../terraform.tfvars"
 terraform plan --var-file="../../terraform.tfvars" -out terraform.tfplan
 terraform apply "terraform.tfplan"
+
+# or
+
+cd prerequisites
+terraform init --var-file="../../terraform.tfvars"
+terraform apply -input=false -auto-approve --var-file="../../terraform.tfvars"
 ```
 
 For the steps above, AWS access key and access secret key should be stored in a terraform.tfvars file.
 There is a sample with the contents of this file in the main directory of the repository.
 
-Once the s3 bucket and dynamodb table are built, the names of these resources will be shown in the terraform output.
-Take these names and populate the related fields in the backend section of the terraform code inside the main.tf files in codebuild, static and infra directories.
+Once the prerequsites resources are built, the details of these resources will be shown in the terraform output.
+Take these details and populate the related fields in these files:
+- terraform_code/*/main.tf (tfstate s3 bucket and dynamodb table)
+- terraform_code/*/variables.tf (iam role arn)
+- terraform_code/.env (AWS acess key and secret)
+- buildspec.yaml (s3 bucket name)
 
 ## Configure Jenkins and run pipeline
 
 Go through Jenkins installation steps at: http://localhost:8090. 
 
 Define these secrets in Jenkins:
- - aws_access_key: AWS_ACCESS_KEY_ID (secret text)
- - aws_secret_key: AWS_SECRET_ACCESS_KEY (secret text)
+ - aws_access_key: AWS_ACCESS_KEY_ID (secret text); created in prerequsites step
+ - aws_secret_key: AWS_SECRET_ACCESS_KEY (secret text); created in prerequsites step
  - aws_region: AWS region (secret text)
  - aws_account: AWS account number (secret text)
  - Git token defined both as secret text and username and password type of secrets (used for git hook and git clone private repo)
 
 AWS credentials inside Codebuild projects:
-- .env file with AWS secrets (AWS_ACCESS_KEY_ID=acces-key and AWS_SECRET_ACCESS_KEY=secret-key) should be made available in s3 bucket (check buildspec.yaml file)
+- .env file with AWS secrets (AWS_ACCESS_KEY_ID=acces-key and AWS_SECRET_ACCESS_KEY=secret-key generated in prerequsites step) should be made available in s3 bucket (check buildspec.yaml file)
 - terraform used by the CodeBuild projects is running inside a container (check docker-compose.yaml file)
 - the terraform credentials are provided as environment variables via the .env file (check docker-compose.yaml file)
 
