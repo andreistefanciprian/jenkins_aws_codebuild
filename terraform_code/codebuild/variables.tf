@@ -29,6 +29,6 @@ variable "session_duration" {
 
 variable "git_repo_branch" {
   type    = string
-  default = "feature/tf-assume-role"
+  default = "master"
 }
 
