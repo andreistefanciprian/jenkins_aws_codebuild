@@ -8,25 +8,25 @@ variable "static_remote_state_bucket" {
 }
 
 variable "cloud_assume_role" {
-  type = bool
+  type    = bool
   default = true
 }
 
 variable "arn_role" {
-  type = string
-  default = "arn:aws:iam::396667666940:role/assume-test-role"
+  type    = string
+  default = "arn:aws:iam::396667666940:role/tf_role"
 }
 
 variable "extenal_id" {
-  type = string
+  type    = string
   default = "smth"
 }
 
 variable "session_name" {
-  type = string
+  type    = string
   default = "Jenkins"
 }
 variable "session_duration" {
-  type = number
+  type    = number
   default = 3600
 }

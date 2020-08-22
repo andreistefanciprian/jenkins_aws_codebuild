@@ -56,6 +56,39 @@ resource "aws_s3_bucket" "tfstate" {
 
 }
 
+# IAM Role
+resource "aws_iam_role" "default" {
+  name = "assume-test-role"
+  assume_role_policy = file("policies/tf-role-trust-policy.json")
+}
+
+resource "aws_iam_role_policy" "default" {
+  name = "assume-test-role-trust-policy"
+  role = aws_iam_role.default.id
+  policy = file("policies/role-policy.json")
+}
+
+# IAM User
+resource "aws_iam_user" "user" {
+  name = "assume-test-user"
+}
+
+resource "aws_iam_policy" "policy" {
+  name        = "assume-test-user-policy"
+  description = "A test policy"
+  policy      = file("policies/tf-user-policy.json")
+}
+
+resource "aws_iam_user_policy_attachment" "test-attach" {
+  user       = aws_iam_user.user.name
+  policy_arn = aws_iam_policy.policy.arn
+}
+
+# IAM key
+resource "aws_iam_access_key" "default" {
+  user    = aws_iam_user.user.name
+}
+
 # output the names of built resources
 output "s3_bucket" {
   value = aws_s3_bucket.tfstate.bucket
@@ -63,4 +96,22 @@ output "s3_bucket" {
 
 output "dynamodb_table" {
   value = aws_dynamodb_table.tf_statelock.name
+}
+
+output "iam_role_arn" {
+  value       = aws_iam_role.default.arn
+  description = "The Amazon Resource Name (ARN) specifying the IAM Role."
+}
+
+output "iam_user_arn" {
+  value       = aws_iam_user.user.arn
+  description = "The name of the IAM user."
+}
+
+output "iam_access_key_id" {
+  value = aws_iam_access_key.default.id
+}
+
+output "iam_secret" {
+  value = aws_iam_access_key.default.secret
 }

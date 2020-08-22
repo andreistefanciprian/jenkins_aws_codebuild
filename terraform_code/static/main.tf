@@ -3,9 +3,9 @@ provider "aws" {
   region = var.region
 
   assume_role {
-    role_arn    = var.cloud_assume_role ? var.arn_role : null
-    external_id = var.cloud_assume_role ? var.extenal_id : null
-    session_name = var.cloud_assume_role ? var.session_name : null
+    role_arn         = var.cloud_assume_role ? var.arn_role : null
+    external_id      = var.cloud_assume_role ? var.extenal_id : null
+    session_name     = var.cloud_assume_role ? var.session_name : null
     duration_seconds = var.cloud_assume_role ? var.session_duration : null
   }
 
