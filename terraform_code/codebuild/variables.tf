@@ -4,7 +4,7 @@ variable "region" {
 
 variable "cloud_assume_role" {
   type = bool
-  default = false
+  default = true
 }
 
 variable "arn_role" {
