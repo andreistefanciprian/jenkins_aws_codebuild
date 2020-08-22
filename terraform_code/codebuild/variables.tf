@@ -21,7 +21,14 @@ variable "session_name" {
   type = string
   default = "Jenkins"
 }
+
 variable "session_duration" {
   type = number
   default = 3600
 }
+
+variable "git_repo_branch" {
+  type = string
+  default = "feature/tf-assume-role"
+}
+

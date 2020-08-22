@@ -30,7 +30,7 @@ module "codebuild_deploy_static" {
   tf_action = "deploy"
   tf_target = "static"
   git_repo_link = "https://github.com/andreistefanciprian/jenkins_aws_codebuild.git"
-  git_repo_branch = "master"
+  git_repo_branch = var.git_repo_branch
   iam_role_name = "iam_role_deploy_static"
   iam_role_policy_name = "iam_role_policy_deploy_static"
 
@@ -47,7 +47,7 @@ module "codebuild_deploy_infra" {
   tf_action = "deploy"
   tf_target = "infra"
   git_repo_link = "https://github.com/andreistefanciprian/jenkins_aws_codebuild.git"
-  git_repo_branch = "master"
+  git_repo_branch = var.git_repo_branch
   iam_role_name = "iam_role_deploy_infra"
   iam_role_policy_name = "iam_role_policy_deploy_infra"
 
@@ -64,7 +64,7 @@ module "codebuild_destroy_static" {
   tf_action = "destroy"
   tf_target = "static"
   git_repo_link = "https://github.com/andreistefanciprian/jenkins_aws_codebuild.git"
-  git_repo_branch = "master"
+  git_repo_branch = var.git_repo_branch
   iam_role_name = "iam_role_destroy_static"
   iam_role_policy_name = "iam_role_policy_destroy_static"
 
@@ -81,7 +81,7 @@ module "codebuild_destroy_infra" {
   tf_action = "destroy"
   tf_target = "infra"
   git_repo_link = "https://github.com/andreistefanciprian/jenkins_aws_codebuild.git"
-  git_repo_branch = "master"
+  git_repo_branch = var.git_repo_branch
   iam_role_name = "iam_role_destroy_infra"
   iam_role_policy_name = "iam_role_policy_destroy_infra"
 
