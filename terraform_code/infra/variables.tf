@@ -4,7 +4,7 @@ variable "region" {
 }
 
 variable "static_remote_state_bucket" {
-  default = "s3-tfstate-83086"
+  default = "s3-tfstate-60303"
 }
 
 # variable "cloud_assume_role" {
