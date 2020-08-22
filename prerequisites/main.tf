@@ -15,6 +15,7 @@ variable "aws_dynamodb_table" {
 
 # configure cloud provider
 provider "aws" {
+  version    = "3.3.0"
   access_key = var.aws_access_key
   secret_key = var.aws_secret_key
   region     = var.region
@@ -28,7 +29,7 @@ resource "random_integer" "rand" {
 
 locals {
   dynamodb_tfstate_lock_table_name = "${var.aws_dynamodb_table}-${random_integer.rand.result}"
-  s3_tfstate_bucket_name  = "${var.aws_s3_bucket}-${random_integer.rand.result}"
+  s3_tfstate_bucket_name           = "${var.aws_s3_bucket}-${random_integer.rand.result}"
 }
 
 # create dynamodb terraform lockstate table
@@ -56,37 +57,48 @@ resource "aws_s3_bucket" "tfstate" {
 
 }
 
+# IAM policies
+variable "role_name" {
+  default = "tf_role"
+}
+
+variable "aws_account" {}
+
+variable "aws_iam_user" {
+  default = "tf_user"
+}
+
+variable "external_id" {
+  default = "smth"
+}
+
+
 # IAM Role
 resource "aws_iam_role" "default" {
-  name = "assume-test-role"
-  assume_role_policy = file("policies/tf-role-trust-policy.json")
+  name               = var.role_name
+  assume_role_policy = templatefile("policies/tf-role-trust-policy.tpl", { aws_account = var.aws_account, aws_iam_user = var.aws_iam_user, external_id = var.external_id })
 }
 
 resource "aws_iam_role_policy" "default" {
-  name = "assume-test-role-trust-policy"
-  role = aws_iam_role.default.id
-  policy = file("policies/role-policy.json")
+  name   = var.role_name
+  role   = aws_iam_role.default.id
+  policy = file("policies/tf-role-policy.json")
 }
 
 # IAM User
-resource "aws_iam_user" "user" {
-  name = "assume-test-user"
+resource "aws_iam_user" "default" {
+  name = var.aws_iam_user
 }
 
-resource "aws_iam_policy" "policy" {
-  name        = "assume-test-user-policy"
-  description = "A test policy"
-  policy      = file("policies/tf-user-policy.json")
-}
-
-resource "aws_iam_user_policy_attachment" "test-attach" {
-  user       = aws_iam_user.user.name
-  policy_arn = aws_iam_policy.policy.arn
+resource "aws_iam_user_policy" "default" {
+  name   = var.aws_iam_user
+  user   = aws_iam_user.default.name
+  policy = templatefile("policies/tf-user-policy.tpl", { aws_account = var.aws_account, role_name = var.role_name })
 }
 
 # IAM key
 resource "aws_iam_access_key" "default" {
-  user    = aws_iam_user.user.name
+  user = aws_iam_user.default.name
 }
 
 # output the names of built resources
@@ -99,13 +111,11 @@ output "dynamodb_table" {
 }
 
 output "iam_role_arn" {
-  value       = aws_iam_role.default.arn
-  description = "The Amazon Resource Name (ARN) specifying the IAM Role."
+  value = aws_iam_role.default.arn
 }
 
 output "iam_user_arn" {
-  value       = aws_iam_user.user.arn
-  description = "The name of the IAM user."
+  value = aws_iam_user.default.arn
 }
 
 output "iam_access_key_id" {
