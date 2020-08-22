@@ -256,7 +256,7 @@ if __name__ == "__main__":
 
     # define vars
     aws_account = sys.argv[1] if len(sys.argv) == 2 else sys.exit('AWS ARN Role has to be provided as positional parameter!')
-    aws_iam_role = 'test-role'
+    aws_iam_role = 'assume-test-role'
     yaml_file = os.path.join(os.getcwd(), 'codebuild_projects.yaml')
     session_name = 'funky_test'
     aws_region = 'us-east-1'
