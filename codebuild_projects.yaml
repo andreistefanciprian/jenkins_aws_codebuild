@@ -1,10 +1,10 @@
 # AWS CodeBuld steps for our projects
 codebuild_projects:
     - deploy_static
-    - deploy_infra
+    # - deploy_infra
     - this_one_doesnt_exist
-    - destroy_infra
-    - destroy_static
+    # - destroy_infra
+    # - destroy_static
     # - failing_job
 codebuild_all_projects:
     - deploy_static
