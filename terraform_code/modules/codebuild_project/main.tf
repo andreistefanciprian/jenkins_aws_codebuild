@@ -60,4 +60,11 @@ resource "aws_codebuild_project" "example" {
   source_version = var.git_repo_branch
 
   tags = var.codebuild_tags
+
+  logs_config {
+    cloudwatch_logs {
+      group_name = "cw-cb-group"
+      stream_name = var.tf_target
+    }
+  }
 }
