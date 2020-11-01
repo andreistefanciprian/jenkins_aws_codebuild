@@ -184,7 +184,7 @@ class AwsSession:
                 raise
             else: 
                 build_id = project_builds['ids'][0]
-                print(build_id) # debug
+                # print(build_id) # debug
                 build_data = self.client.batch_get_builds(ids = [build_id])
                 result['Build Number'] = build_data['builds'][0]['buildNumber']
                 result['Build Start Time'] = build_data['builds'][0]['startTime']
