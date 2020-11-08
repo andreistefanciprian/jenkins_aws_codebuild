@@ -140,7 +140,7 @@ class AwsSession:
                     print(k,v)
             return caller_identity
 
-    def _logs_client(self):
+    def _cwlogs_client(self):
         """
         Create a low-level service Cloudwatch client by name.
         return: True or False
@@ -185,7 +185,7 @@ class AwsSession:
         return: Prints the logs
         """ 
 
-        if self._logs_client():
+        if self._cwlogs_client():
 
             log_stream_id = self.codebuild_id.split(':')[1]
             codebuild_project = self.codebuild_id.split(':')[0]
