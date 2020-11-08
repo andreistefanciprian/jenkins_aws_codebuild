@@ -30,18 +30,24 @@ def main(codebuild_list, **kwargs):
             status = session.get_codebuild_status(codebuild_project)
             if status != "SUCCEEDED":
                 sys.exit(f"CodeBuild Project {codebuild_project} failed!")
-
         else:
-            log(f'{codebuild_project} is not available in AWS CodeBuild Project list.', new_line=True)
+            log(f'{codebuild_project} is not available in AWS CodeBuild Project list.', warn=True)
 
-def log(message, new_line=False):
+def log(message, new_line=False, green=False, warn=False):
     """
     Print message to stdout with timestamp.
     """
+    ENDC = '\033[0m'
+    OKGREEN = '\033[32;1m'
+    FAIL = '\033[31;1m'
 
     now = datetime.datetime.now().strftime("%H:%M:%S")
     if new_line:
         print('\n' + now, message)
+    elif green:
+        print('\n' + f'{OKGREEN}{now} {message}{ENDC}')
+    elif warn:
+        print('\n' + f'{FAIL}{now} {message}{ENDC}')
     else:
         print(now, message)
 
@@ -54,7 +60,7 @@ def parse_yaml(yaml_file, yaml_list_elem):
     cb_projects_to_run = []
 
     if os.path.exists(yaml_file):
-        log(f'Reading {yaml_file} file ...', new_line=True)
+        log(f'Reading {yaml_file} file ...', green=True)
         with open(yaml_file, 'r') as file:
             try:
                 read_yaml = yaml.full_load(file)
@@ -79,7 +85,7 @@ class AwsSession:
     Sending commands to AWS.
     """
 
-    def __init__(self, aws_account, aws_iam_role, aws_region, duration_seconds=None, external_id=None, session_name=None):
+    def __init__(self, aws_account, aws_iam_role, aws_region, duration_seconds=None, external_id=None, session_name=None, logs_group_name=None):
         self.aws_account = aws_account
         self.aws_iam_role = aws_iam_role
         self.arn = f'arn:aws:iam::{aws_account}:role/{aws_iam_role}'
@@ -92,6 +98,13 @@ class AwsSession:
         self.codebuild_projects = None
         self._codebuild_is_connected = False
         self.sts_caller_identity = self._get_sts_caller_identity()
+        
+        # cloudwatch
+        self.logs_group_name = 'cw-cb-group' if logs_group_name is None else logs_group_name
+        self.codebuild_id = None
+        self._logs_client = None
+        self._logs_is_connected = False
+        self._logs_stream_id = None
 
     def _assume_role(self):
         """
@@ -125,10 +138,28 @@ class AwsSession:
             raise
         else:
             caller_identity = client.get_caller_identity()
-            log("STS Identity assumed!", new_line=True)
+            log("STS Identity assumed!", green=True)
             for k,v in caller_identity.items():
                     print(k,v)
             return caller_identity
+
+    def _cwlogs_client(self):
+        """
+        Create a low-level service Cloudwatch client by name.
+        return: True or False
+        """
+
+        if not self._logs_is_connected:
+            try:
+                self._logs_client = self.session.client('logs')
+            except Exception as e:
+                log(str(e))
+                raise
+            else:
+                self._logs_is_connected = True
+                return self._logs_is_connected
+        else:
+            return self._logs_is_connected
 
     def _codebuild_client(self):
         """
@@ -148,11 +179,40 @@ class AwsSession:
         else:
             return self._codebuild_is_connected
 
+    def display_cloudwatch_logs(self):
+        """
+        Get CloudWatch logs from AWS.
+        return: Prints the logs
+        """ 
+
+        if self._cwlogs_client():
+
+            log_stream_id = self.codebuild_id.split(':')[1]
+            codebuild_project = self.codebuild_id.split(':')[0]
+            log_stream = f'{codebuild_project}/{log_stream_id}'
+
+            try:
+                response = self._logs_client.get_log_events(
+                    logGroupName=self.logs_group_name,
+                    logStreamName=log_stream,
+                    startFromHead=True
+                )
+            except Exception as e:
+                log(str(e))
+                raise
+            else:
+                log(f'Cloudwatch logs for {self.codebuild_id}:', new_line=False)
+                for i in response['events']:
+                    msg = i['message'].strip()
+                    print(msg)
+        else:
+            raise Exception("Cannot establish CloudWatch connection ...!")
+
     def get_codebuild_projects(self):
         """
         Get list of CodeBuild projects from AWS.
         return: list of projects
-        """
+        """ 
 
         if self._codebuild_client():
             try:
@@ -161,7 +221,7 @@ class AwsSession:
                 log(str(e))
                 raise
             else:
-                log('CodeBuild projects currently available in AWS:', new_line=True)
+                log('CodeBuild projects currently available in AWS:', green=True)
                 for project in self.codebuild_projects['projects']:
                     print(project)
                 return self.codebuild_projects['projects']
@@ -178,13 +238,11 @@ class AwsSession:
             result = {}
 
             try:
-                project_builds = self.client.list_builds_for_project(projectName=codebuild_project)
+                build_data = self.client.batch_get_builds(ids = [self.codebuild_id])
             except Exception as e:
                 log(str(e))
                 raise
             else: 
-                build_id = project_builds['ids'][0]
-                build_data = self.client.batch_get_builds(ids = [build_id])
                 result['Build Number'] = build_data['builds'][0]['buildNumber']
                 result['Build Start Time'] = build_data['builds'][0]['startTime']
                 result['Build Status'] = build_data['builds'][0]['buildStatus']
@@ -200,13 +258,15 @@ class AwsSession:
 
         if self._codebuild_client():
             try:
-                self.client.start_build(projectName=codebuild_project)
+                result = self.client.start_build(projectName=codebuild_project)
             except Exception as e:
                 log(str(e))
                 raise
             else:
-                last_build_results = self.get_codebuild_build_result(codebuild_project)
-                log(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...", new_line=True)
+                self.codebuild_id = result['build']['id']
+                build_number = result['build']['buildNumber']
+                build_start_time = (result['build']['startTime']).strftime("%H:%M:%S")
+                log(f"Started build {build_number}, {self.codebuild_id} at {build_start_time} ...", green=True)
         else:
             raise Exception("Cannot establish CodeBuild connection ...!")
 
@@ -243,10 +303,12 @@ class AwsSession:
                 elif last_build_results['Build Status'] == 'SUCCEEDED':
                     log(status_msg)
                     result = last_build_results['Build Status']
+                    self.display_cloudwatch_logs()
                     break
                 else:
                     log(status_msg)
                     result = last_build_results['Build Status']
+                    self.display_cloudwatch_logs()
                     break
 
         return result
