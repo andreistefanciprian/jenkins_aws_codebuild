@@ -28,9 +28,13 @@ def main(codebuild_list, **kwargs):
     
             # verify CodeBuild build status
             status = session.get_codebuild_status(codebuild_project)
-            if status != "SUCCEEDED":
+            # if status != "SUCCEEDED":
+            #     sys.exit(f"CodeBuild Project {codebuild_project} failed!")
+            if status == "SUCCEEDED":
+                session.display_cloudwatch_logs()
+            else:
+                session.display_cloudwatch_logs()
                 sys.exit(f"CodeBuild Project {codebuild_project} failed!")
-
         else:
             log(f'{codebuild_project} is not available in AWS CodeBuild Project list.', new_line=True)
 
@@ -79,7 +83,7 @@ class AwsSession:
     Sending commands to AWS.
     """
 
-    def __init__(self, aws_account, aws_iam_role, aws_region, duration_seconds=None, external_id=None, session_name=None):
+    def __init__(self, aws_account, aws_iam_role, aws_region, duration_seconds=None, external_id=None, session_name=None, logs_group_name=None):
         self.aws_account = aws_account
         self.aws_iam_role = aws_iam_role
         self.arn = f'arn:aws:iam::{aws_account}:role/{aws_iam_role}'
@@ -93,6 +97,7 @@ class AwsSession:
         self._codebuild_is_connected = False
         self.sts_caller_identity = self._get_sts_caller_identity()
         # cloudwatch
+        self.logs_group_name = 'cw-cb-group' if logs_group_name is None else logs_group_name
         self.codebuild_id = None
         self._logs_client = None
         self._logs_is_connected = False
@@ -153,16 +158,21 @@ class AwsSession:
         else:
             return self._logs_is_connected
 
-    def display_cloudwatch_logs(self, log_group_name, log_stream):
+    def display_cloudwatch_logs(self):
         """
         Get CloudWatch logs from AWS.
         return: Prints the logs
         """ 
 
         if self._logs_client():
+
+            log_stream_id = self.codebuild_id.split(':')[1]
+            codebuild_project = self.codebuild_id.split(':')[0]
+            log_stream = f'{codebuild_project}/{log_stream_id}'
+
             try:
                 response = client.get_log_events(
-                    logGroupName=log_group_name,
+                    logGroupName=self.logs_group_name,
                     logStreamName=log_stream,
                     startFromHead=True
                 )
@@ -170,7 +180,7 @@ class AwsSession:
                 log(str(e))
                 raise
             else:
-                log('Cloudwatch logs for {log_group_name}/{log_stream}', new_line=False)
+                log('Cloudwatch logs for {self.logs_group_name}/{log_stream}', new_line=False)
                 for i in response['events']:
                     log = i['message'].strip()
                     print(log)
