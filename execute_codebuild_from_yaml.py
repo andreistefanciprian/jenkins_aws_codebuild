@@ -92,6 +92,9 @@ class AwsSession:
         self.codebuild_projects = None
         self._codebuild_is_connected = False
         self.sts_caller_identity = self._get_sts_caller_identity()
+        # cloudwatch
+        self._logs_client = None
+        self._logs_is_connected = False
 
     def _assume_role(self):
         """
@@ -129,6 +132,48 @@ class AwsSession:
             for k,v in caller_identity.items():
                     print(k,v)
             return caller_identity
+
+    def _logs_client(self):
+        """
+        Create a low-level service Cloudwatch client by name.
+        return: True or False
+        """
+
+        if not self._logs_is_connected:
+            try:
+                self._logs_client = self.session.client('logs')
+            except Exception as e:
+                log(str(e))
+                raise
+            else:
+                self._logs_is_connected = True
+                return self._logs_is_connected
+        else:
+            return self._logs_is_connected
+
+    def display_cloudwatch_logs(self, log_group_name, log_stream):
+        """
+        Get CloudWatch logs from AWS.
+        return: Prints the logs
+        """ 
+
+        if self._logs_client():
+            try:
+                response = client.get_log_events(
+                    logGroupName=log_group_name,
+                    logStreamName=log_stream,
+                    startFromHead=True
+                )
+            except Exception as e:
+                log(str(e))
+                raise
+            else:
+                log('Cloudwatch logs for {log_group_name}/{log_stream}', new_line=False)
+                for i in response['events']:
+                    log = i['message'].strip()
+                    print(log)
+        else:
+            raise Exception("Cannot establish CloudWatch connection ...!")
 
     def _codebuild_client(self):
         """
