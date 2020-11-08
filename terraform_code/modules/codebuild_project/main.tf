@@ -64,7 +64,7 @@ resource "aws_codebuild_project" "example" {
   logs_config {
     cloudwatch_logs {
       group_name = "cw-cb-group"
-      stream_name = var.tf_target
+      stream_name = var.codebuild_project_name
     }
   }
 }
