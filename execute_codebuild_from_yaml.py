@@ -166,9 +166,9 @@ class AwsSession:
         else:
             return self._logs_is_connected
 
-    def _codebuild_client(self):
+    def _cb_client(self):
         """
-        Create a low-level service client by name.
+        Create a low-level service CodeBuild client by name.
         return: True or False
         """
 
@@ -219,7 +219,7 @@ class AwsSession:
         return: list of projects
         """ 
 
-        if self._codebuild_client():
+        if self._cb_client():
             try:
                 self.codebuild_projects = self._codebuild_client.list_projects()
             except Exception as e:
@@ -239,7 +239,7 @@ class AwsSession:
         return: dictionary
         """
 
-        if self._codebuild_client():
+        if self._cb_client():
             result = {}
 
             try:
@@ -261,7 +261,7 @@ class AwsSession:
         Start CodeBuild project build.
         """
 
-        if self._codebuild_client():
+        if self._cb_client():
             try:
                 result = self._codebuild_client.start_build(projectName=codebuild_project)
             except Exception as e:
