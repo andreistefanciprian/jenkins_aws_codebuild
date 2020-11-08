@@ -37,14 +37,14 @@ pipeline {
          }
       }
 
-      stage('Destroy CodeBuild projects with Terraform') {
-         steps {
-               echo 'Destroying AWS CodeBuild Projects...'
-               dir('terraform_code/'){
-                  sh "make destroy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
-               }                
-         }
-      }
+      // stage('Destroy CodeBuild projects with Terraform') {
+      //    steps {
+      //          echo 'Destroying AWS CodeBuild Projects...'
+      //          dir('terraform_code/'){
+      //             sh "make destroy-auto-approve TF_TARGET=codebuild TF_EXEC=terraform"
+      //          }                
+      //    }
+      // }
 
    }
 }
