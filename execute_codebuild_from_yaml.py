@@ -148,15 +148,36 @@ class AwsSession:
 
         if not self._logs_is_connected:
             try:
+                print('Trying to connect to serv logs')
                 self._logs_client = self.session.client('logs')
             except Exception as e:
                 log(str(e))
                 raise
             else:
+                print('Set _logs_is_connected True')
                 self._logs_is_connected = True
+                print(f'logs: {self._logs_is_connected}')
                 return self._logs_is_connected
         else:
             return self._logs_is_connected
+
+    def _codebuild_client(self):
+        """
+        Create a low-level service client by name.
+        return: True or False
+        """
+
+        if not self._codebuild_is_connected:
+            try:
+                self.client = self.session.client('codebuild')
+            except Exception as e:
+                log(str(e))
+                raise
+            else:
+                self._codebuild_is_connected = True
+                return self._codebuild_is_connected
+        else:
+            return self._codebuild_is_connected
 
     def display_cloudwatch_logs(self):
         """
@@ -186,24 +207,6 @@ class AwsSession:
                     print(log)
         else:
             raise Exception("Cannot establish CloudWatch connection ...!")
-
-    def _codebuild_client(self):
-        """
-        Create a low-level service client by name.
-        return: True or False
-        """
-
-        if not self._codebuild_is_connected:
-            try:
-                self.client = self.session.client('codebuild')
-            except Exception as e:
-                log(str(e))
-                raise
-            else:
-                self._codebuild_is_connected = True
-                return self._codebuild_is_connected
-        else:
-            return self._codebuild_is_connected
 
     def get_codebuild_projects(self):
         """
