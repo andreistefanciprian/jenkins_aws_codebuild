@@ -263,7 +263,7 @@ class AwsSession:
                 self.codebuild_id = result['build']['id']
                 build_number = result['build']['buildNumber']
                 build_start_time = (result['build']['startTime']).strftime("%H:%M:%S")
-                log(f"Started build {build_number} / {self.codebuild_id} for the AWS CodeBuild Project {codebuild_project} at {build_start_time} ...", new_line=True)
+                log(f"Started build {build_number}, {self.codebuild_id} at {build_start_time} ...", new_line=True)
         else:
             raise Exception("Cannot establish CodeBuild connection ...!")
 
