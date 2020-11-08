@@ -93,7 +93,7 @@ class AwsSession:
         self._codebuild_is_connected = False
         self.sts_caller_identity = self._get_sts_caller_identity()
         # cloudwatch
-        self._codebuild_id = None
+        self.codebuild_id = None
         self._logs_client = None
         self._logs_is_connected = False
         self._logs_stream_id = None
@@ -225,14 +225,15 @@ class AwsSession:
             result = {}
 
             try:
-                project_builds = self.client.list_builds_for_project(projectName=codebuild_project)
+                # project_builds = self.client.list_builds_for_project(projectName=codebuild_project)
+                build_data = self.client.batch_get_builds(ids = [self.codebuild_id])
             except Exception as e:
                 log(str(e))
                 raise
             else: 
-                build_id = project_builds['ids'][0]
+                # build_id = project_builds['ids'][0]
                 # print(build_id) # debug
-                build_data = self.client.batch_get_builds(ids = [build_id])
+                # build_data = self.client.batch_get_builds(ids = [build_id])
                 result['Build Number'] = build_data['builds'][0]['buildNumber']
                 result['Build Start Time'] = build_data['builds'][0]['startTime']
                 result['Build Status'] = build_data['builds'][0]['buildStatus']
@@ -253,10 +254,10 @@ class AwsSession:
                 log(str(e))
                 raise
             else:
-                self._codebuild_id = result['build']['id']
+                self.codebuild_id = result['build']['id']
                 build_number = result['build']['buildNumber']
                 build_start_time = (result['build']['startTime']).strftime("%H:%M:%S")
-                log(f"Started build {build_number} / {self._codebuild_id} for the AWS CodeBuild Project {codebuild_project} at {build_start_time} ...", new_line=True)
+                log(f"Started build {build_number} / {self.codebuild_id} for the AWS CodeBuild Project {codebuild_project} at {build_start_time} ...", new_line=True)
         else:
             raise Exception("Cannot establish CodeBuild connection ...!")
 
