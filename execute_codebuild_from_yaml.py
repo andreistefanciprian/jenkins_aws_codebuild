@@ -254,7 +254,9 @@ class AwsSession:
                 raise
             else:
                 self._codebuild_id = result['build']['id']
-                log(f"Started build {result['build']['buildNumber']} / {self._codebuild_id} for the AWS CodeBuild Project {codebuild_project} at {(result['build']['startTime']).strftime("%H:%M:%S")} ...", new_line=True)
+                build_number = result['build']['buildNumber']
+                build_start_time = (result['build']['startTime']).strftime("%H:%M:%S")
+                log(f"Started build {build_number} / {self._codebuild_id} for the AWS CodeBuild Project {codebuild_project} at {build_start_time} ...", new_line=True)
         else:
             raise Exception("Cannot establish CodeBuild connection ...!")
 
