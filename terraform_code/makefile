@@ -29,3 +29,6 @@ destroy: init
 
 destroy-auto-approve: init
 	$(TF_EXEC) destroy -input=false -auto-approve $(TF_TARGET)
+
+verify-version: 
+	$(TF_EXEC) version
