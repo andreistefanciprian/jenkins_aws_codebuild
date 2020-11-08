@@ -171,7 +171,7 @@ class AwsSession:
             log_stream = f'{codebuild_project}/{log_stream_id}'
 
             try:
-                response = client.get_log_events(
+                response = self._logs_client.get_log_events(
                     logGroupName=self.logs_group_name,
                     logStreamName=log_stream,
                     startFromHead=True
