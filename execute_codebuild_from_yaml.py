@@ -148,15 +148,12 @@ class AwsSession:
 
         if not self._logs_is_connected:
             try:
-                print('Trying to connect to serv logs')
                 self._logs_client = self.session.client('logs')
             except Exception as e:
                 log(str(e))
                 raise
             else:
-                print('Set _logs_is_connected True')
                 self._logs_is_connected = True
-                print(f'logs: {self._logs_is_connected}')
                 return self._logs_is_connected
         else:
             return self._logs_is_connected
@@ -238,15 +235,11 @@ class AwsSession:
             result = {}
 
             try:
-                # project_builds = self.client.list_builds_for_project(projectName=codebuild_project)
                 build_data = self.client.batch_get_builds(ids = [self.codebuild_id])
             except Exception as e:
                 log(str(e))
                 raise
             else: 
-                # build_id = project_builds['ids'][0]
-                # print(build_id) # debug
-                # build_data = self.client.batch_get_builds(ids = [build_id])
                 result['Build Number'] = build_data['builds'][0]['buildNumber']
                 result['Build Start Time'] = build_data['builds'][0]['startTime']
                 result['Build Status'] = build_data['builds'][0]['buildStatus']
