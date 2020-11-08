@@ -248,7 +248,7 @@ class AwsSession:
 
         if self._codebuild_client():
             try:
-                response = self.client.start_build(projectName=codebuild_project)
+                result = self.client.start_build(projectName=codebuild_project)
             except Exception as e:
                 log(str(e))
                 raise
