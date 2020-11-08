@@ -91,10 +91,10 @@ class AwsSession:
         self.aws_account = aws_account
         self.aws_iam_role = aws_iam_role
         self.arn = f'arn:aws:iam::{aws_account}:role/{aws_iam_role}'
-        self.sts_session_name = 'jenkins_session' if sts_session_name is None else sts_session_name
         self.aws_region = aws_region
 
         # aws assume role instance vars
+        self.sts_session_name = 'jenkins_session' if sts_session_name is None else sts_session_name
         self.sts_external_id = 'jenkins_id' if sts_external_id is None else sts_external_id
         self.sts_duration = 3600 if sts_duration is None else sts_duration
         self._sts_client = None
