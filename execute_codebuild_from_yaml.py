@@ -43,14 +43,14 @@ def log(message, new_line=False, green=False):
     Print message to stdout with timestamp.
     """
     ENDC = '\033[0m'
-    OKGREEN = '\033[92m'
-    FAIL = '\033[91m'
+    OKGREEN = '\033[32;1m'
+    FAIL = '\033[31;1m'
 
     now = datetime.datetime.now().strftime("%H:%M:%S")
     if new_line:
         print('\n' + now, message)
-    if green:
-        print(f'{OKGREEN}{now} {message}{ENDC}')
+    elif green:
+        print(f'\n{OKGREEN}{now} {message}{ENDC}')
     else:
         print(now, message)
 
@@ -101,6 +101,7 @@ class AwsSession:
         self.codebuild_projects = None
         self._codebuild_is_connected = False
         self.sts_caller_identity = self._get_sts_caller_identity()
+        
         # cloudwatch
         self.logs_group_name = 'cw-cb-group' if logs_group_name is None else logs_group_name
         self.codebuild_id = None
@@ -203,7 +204,7 @@ class AwsSession:
                 log(str(e))
                 raise
             else:
-                log('Cloudwatch logs for {self.codebuild_id}', new_line=False)
+                log(f'Cloudwatch logs for {self.codebuild_id}:', new_line=False)
                 for i in response['events']:
                     msg = i['message'].strip()
                     print(msg)
