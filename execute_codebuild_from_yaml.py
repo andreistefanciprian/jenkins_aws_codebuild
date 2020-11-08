@@ -38,14 +38,19 @@ def main(codebuild_list, **kwargs):
         else:
             log(f'{codebuild_project} is not available in AWS CodeBuild Project list.', new_line=True)
 
-def log(message, new_line=False):
+def log(message, new_line=False, green=False):
     """
     Print message to stdout with timestamp.
     """
+    ENDC = '\033[0m'
+    OKGREEN = '\033[92m'
+    FAIL = '\033[91m'
 
     now = datetime.datetime.now().strftime("%H:%M:%S")
     if new_line:
         print('\n' + now, message)
+    if green:
+        print(f'{OKGREEN}{now} {message}{ENDC}')
     else:
         print(now, message)
 
@@ -263,7 +268,7 @@ class AwsSession:
                 self.codebuild_id = result['build']['id']
                 build_number = result['build']['buildNumber']
                 build_start_time = (result['build']['startTime']).strftime("%H:%M:%S")
-                log(f"Started build {build_number}, {self.codebuild_id} at {build_start_time} ...", new_line=True)
+                log(f"Started build {build_number}, {self.codebuild_id} at {build_start_time} ...", green=True)
         else:
             raise Exception("Cannot establish CodeBuild connection ...!")
 
