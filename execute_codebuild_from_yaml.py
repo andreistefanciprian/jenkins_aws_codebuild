@@ -203,8 +203,8 @@ class AwsSession:
             else:
                 log('Cloudwatch logs for {self.logs_group_name}/{log_stream}', new_line=False)
                 for i in response['events']:
-                    log = i['message'].strip()
-                    print(log)
+                    msg = i['message'].strip()
+                    print(msg)
         else:
             raise Exception("Cannot establish CloudWatch connection ...!")
 
