@@ -198,7 +198,7 @@ class AwsSession:
                 log(str(e))
                 raise
             else:
-                log('Cloudwatch logs for {self.logs_group_name}/{log_stream}', new_line=False)
+                log('Cloudwatch logs for {self.codebuild_id}', new_line=False)
                 for i in response['events']:
                     msg = i['message'].strip()
                     print(msg)
