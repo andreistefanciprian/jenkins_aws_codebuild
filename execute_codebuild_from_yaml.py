@@ -30,15 +30,10 @@ def main(codebuild_list, **kwargs):
             status = session.get_codebuild_status(codebuild_project)
             if status != "SUCCEEDED":
                 sys.exit(f"CodeBuild Project {codebuild_project} failed!")
-            # if status == "SUCCEEDED":
-            #     session.display_cloudwatch_logs()
-            # else:
-            #     session.display_cloudwatch_logs()
-            #     sys.exit(f"CodeBuild Project {codebuild_project} failed!")
         else:
-            log(f'{codebuild_project} is not available in AWS CodeBuild Project list.', new_line=True)
+            log(f'{codebuild_project} is not available in AWS CodeBuild Project list.', warn=True)
 
-def log(message, new_line=False, green=False):
+def log(message, new_line=False, green=False, warn=False):
     """
     Print message to stdout with timestamp.
     """
@@ -50,7 +45,9 @@ def log(message, new_line=False, green=False):
     if new_line:
         print('\n' + now, message)
     elif green:
-        print(f'\n{OKGREEN}{now} {message}{ENDC}')
+        print('\n' + f'{OKGREEN}{now} {message}{ENDC}')
+    elif warn:
+        print('\n' + f'{FAIL}{now} {message}{ENDC}')
     else:
         print(now, message)
 
@@ -63,7 +60,7 @@ def parse_yaml(yaml_file, yaml_list_elem):
     cb_projects_to_run = []
 
     if os.path.exists(yaml_file):
-        log(f'Reading {yaml_file} file ...', new_line=True)
+        log(f'Reading {yaml_file} file ...', green=True)
         with open(yaml_file, 'r') as file:
             try:
                 read_yaml = yaml.full_load(file)
@@ -141,7 +138,7 @@ class AwsSession:
             raise
         else:
             caller_identity = client.get_caller_identity()
-            log("STS Identity assumed!", new_line=True)
+            log("STS Identity assumed!", green=True)
             for k,v in caller_identity.items():
                     print(k,v)
             return caller_identity
@@ -224,7 +221,7 @@ class AwsSession:
                 log(str(e))
                 raise
             else:
-                log('CodeBuild projects currently available in AWS:', new_line=True)
+                log('CodeBuild projects currently available in AWS:', green=True)
                 for project in self.codebuild_projects['projects']:
                     print(project)
                 return self.codebuild_projects['projects']
