@@ -28,13 +28,13 @@ def main(codebuild_list, **kwargs):
     
             # verify CodeBuild build status
             status = session.get_codebuild_status(codebuild_project)
-            # if status != "SUCCEEDED":
-            #     sys.exit(f"CodeBuild Project {codebuild_project} failed!")
-            if status == "SUCCEEDED":
-                session.display_cloudwatch_logs()
-            else:
-                session.display_cloudwatch_logs()
+            if status != "SUCCEEDED":
                 sys.exit(f"CodeBuild Project {codebuild_project} failed!")
+            # if status == "SUCCEEDED":
+            #     session.display_cloudwatch_logs()
+            # else:
+            #     session.display_cloudwatch_logs()
+            #     sys.exit(f"CodeBuild Project {codebuild_project} failed!")
         else:
             log(f'{codebuild_project} is not available in AWS CodeBuild Project list.', new_line=True)
 
@@ -304,10 +304,12 @@ class AwsSession:
                 elif last_build_results['Build Status'] == 'SUCCEEDED':
                     log(status_msg)
                     result = last_build_results['Build Status']
+                    self.display_cloudwatch_logs()
                     break
                 else:
                     log(status_msg)
                     result = last_build_results['Build Status']
+                    self.display_cloudwatch_logs()
                     break
 
         return result
