@@ -93,8 +93,10 @@ class AwsSession:
         self._codebuild_is_connected = False
         self.sts_caller_identity = self._get_sts_caller_identity()
         # cloudwatch
+        self._codebuild_id = None
         self._logs_client = None
         self._logs_is_connected = False
+        self._logs_stream_id = None
 
     def _assume_role(self):
         """
@@ -229,7 +231,7 @@ class AwsSession:
                 raise
             else: 
                 build_id = project_builds['ids'][0]
-                print(build_id) # debug
+                # print(build_id) # debug
                 build_data = self.client.batch_get_builds(ids = [build_id])
                 result['Build Number'] = build_data['builds'][0]['buildNumber']
                 result['Build Start Time'] = build_data['builds'][0]['startTime']
@@ -246,13 +248,13 @@ class AwsSession:
 
         if self._codebuild_client():
             try:
-                self.client.start_build(projectName=codebuild_project)
+                response = self.client.start_build(projectName=codebuild_project)
             except Exception as e:
                 log(str(e))
                 raise
             else:
-                last_build_results = self.get_codebuild_build_result(codebuild_project)
-                log(f"Started build {last_build_results['Build Number']} for the AWS CodeBuild Project {codebuild_project} at {last_build_results['Build Start Time']} ...", new_line=True)
+                self._codebuild_id = result['build']['id']
+                log(f"Started build {result['build']['buildNumber']} / {self._codebuild_id} for the AWS CodeBuild Project {codebuild_project} at {(result['build']['startTime']).strftime("%H:%M:%S")} ...", new_line=True)
         else:
             raise Exception("Cannot establish CodeBuild connection ...!")
 
