@@ -256,7 +256,7 @@ class AwsSession:
                 result['Build Project Name'] = build_data['builds'][0]['projectName']
             return result
         else:
-            raise Exception("Cannot establish CodeBuild connection ...")
+            raise Exception('Cannot establish CodeBuild connection ...')
 
     def start_codebuild_build(self, codebuild_project):
         """
